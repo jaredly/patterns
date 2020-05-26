@@ -1,0 +1,16 @@
+{
+    "dependencies": {
+        "bs-css": "^12.2.0",
+        "bs-platform": "^7.3.2",
+        "parcel": "^1.12.4",
+        "react": "^16.13.1",
+        "react-dom": "^16.13.1",
+        "reason-react": "^0.8.0"
+    },
+    "scripts": {
+        "build": "bsb -make-world"
+    },
+    "devDependencies": {
+        "bsb-js": "^1.1.7"
+    }
+}
