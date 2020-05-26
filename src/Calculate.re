@@ -1,15 +1,15 @@
 open Types;
 
-let angleTo = ((dx, dy)) => atan2(dy, dx);
+let angleTo = ({x, y}) => atan2(y, x);
 
-let dist = ((dx, dy)) => {
-  sqrt(dx *. dx +. dy *. dy);
+let dist = ({x, y}) => {
+  sqrt(x *. x +. y *. y);
 };
 
-let dpos = ((x1, y1), (x2, y2)) => {
-  let dx = x2 -. x1;
-  let dy = y2 -. y1;
-  (dx, dy);
+let dpos = (p1, p2) => {
+  let x = p2.x -. p1.x;
+  let y = p2.y -. p1.y;
+  {x, y};
 };
 
 let toPos = ((x, y)) => {x, y};
@@ -20,8 +20,8 @@ let rotateAround = (point, center, theta) => {
   let mag = dist(diff);
 
   (
-    fst(center) +. cos(theta +. angle) *. mag,
-    snd(center) +. sin(theta +. angle) *. mag,
+    center.x +. cos(theta +. angle) *. mag,
+    center.y +. sin(theta +. angle) *. mag,
   );
 };
 
@@ -42,10 +42,10 @@ let rec resolvePoint = (id: reference, scene: scene, positions: positions) => {
       let theta = angleTo(delta);
       let around =
         Js.Math._PI *. 2. /. float_of_int(count) *. float_of_int(index);
-      (
-        fst(center) +. cos(theta +. around) *. mag,
-        snd(center) +. sin(theta +. around) *. mag,
-      );
+      {
+        x: center.x +. cos(theta +. around) *. mag,
+        y: center.y +. sin(theta +. around) *. mag,
+      };
     }
   };
 }
@@ -66,24 +66,27 @@ and getOrCalculatePoint = (id: string, scene: scene, positions: positions) => {
 
 and calculatePoint = (point: point, scene: scene, positions: positions) => {
   switch (point) {
-  | Abs({x, y}) => (x, y)
+  | Abs({x, y}) => {x, y}
   | Line({source, dest, percentOrAbs}) =>
-    let (x1, y1) = resolvePoint(source, scene, positions);
-    let (x2, y2) = resolvePoint(dest, scene, positions);
-    let dx = x2 -. x1;
-    let dy = y2 -. y1;
+    let p1 = resolvePoint(source, scene, positions);
+    let p2 = resolvePoint(dest, scene, positions);
+    let dx = p2.x -. p1.x;
+    let dy = p2.y -. p1.y;
     switch (percentOrAbs) {
-    | Percent(perc) => (x1 +. dx *. perc, y1 +. dy *. perc)
+    | Percent(perc) => {x: p1.x +. dx *. perc, y: p1.y +. dy *. perc}
     // | Abs(v) => x1 +.
     };
   | Circle({center, onEdge, angle, offset}) =>
-    let (cx, cy) = resolvePoint(center, scene, positions);
+    let c = resolvePoint(center, scene, positions);
     let p = resolvePoint(onEdge, scene, positions);
-    let delta = dpos((cx, cy), p);
+    let delta = dpos(c, p);
     let mag = dist(delta);
-    let theta = atan2(snd(delta), fst(delta)) +. angle;
+    let theta = atan2(delta.y, delta.x) +. angle;
     let Percent(offset) = offset;
-    (cx +. cos(theta) *. mag *. offset, cy +. sin(theta) *. mag *. offset);
+    {
+      x: c.x +. cos(theta) *. mag *. offset,
+      y: c.y +. sin(theta) *. mag *. offset,
+    };
   // | Radial({center, point, count, index}) =>
   //   let (cx, cy) = resolvePoint(center, scene, positions);
   //   let p = resolvePoint(point, scene, positions);
@@ -151,42 +154,29 @@ let symShapes = (scene, positions) => {
 let shape = (shape: shapeKind, scene: scene, positions: positions) =>
   switch (shape) {
   | Line({p1, p2}) =>
-    let (x1, y1) = resolvePoint(p1, scene, positions);
-    let (x2, y2) = resolvePoint(p2, scene, positions);
-    CLine({
-      p1: {
-        x: x1,
-        y: y1,
-      },
-      p2: {
-        x: x2,
-        y: y2,
-      },
-    });
+    let p1 = resolvePoint(p1, scene, positions);
+    let p2 = resolvePoint(p2, scene, positions);
+    CLine({p1, p2});
   | Circle({center, onEdge}) =>
-    let (cx, cy) = resolvePoint(center, scene, positions);
+    let c = resolvePoint(center, scene, positions);
     let onEdge = resolvePoint(onEdge, scene, positions);
 
-    let r = dist(dpos((cx, cy), onEdge));
-    CCircle({
-      center: {
-        x: cx,
-        y: cy,
-      },
-      r,
-    });
+    let r = dist(dpos(c, onEdge));
+    CCircle({center: c, r});
   };
 
-let line = (p1, p2, scene, positions) => {
-  let (x1, y1) = resolvePoint(p1, scene, positions);
-  let (x2, y2) = resolvePoint(p2, scene, positions);
-  (x1, y1, x2, y2);
-};
+/**  ok */;
+// let line = (p1, p2, scene, positions) => {
+//   let p1 = resolvePoint(p1, scene, positions);
+//   let p2 = resolvePoint(p2, scene, positions);
+//   (x1, y1, x2, y2);
+// };
 
-let circle = (center, onEdge, scene, positions) => {
-  let (cx, cy) = resolvePoint(center, scene, positions);
-  let onEdge = resolvePoint(onEdge, scene, positions);
+// let circle = (center, onEdge, scene, positions) => {
+//   let (cx, cy) = resolvePoint(center, scene, positions);
+//   let onEdge = resolvePoint(onEdge, scene, positions);
 
-  let r = dist(dpos((cx, cy), onEdge));
-  (cx, cy, r);
-};
+//   let r = dist(dpos((cx, cy), onEdge));
+//   (cx, cy, r);
+// };
+/* ok */

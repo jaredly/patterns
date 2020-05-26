@@ -244,7 +244,7 @@ type selection =
 
 type points = Belt.Map.String.t(point);
 type symmetries = Belt.Map.String.t(symm);
-type positions = Hashtbl.t(string, (float, float));
+type positions = Hashtbl.t(string, pos);
 type shapes = Belt.Map.String.t(shapeKind);
 type shapeSymmetries = Belt.Map.String.t(shapeSymm);
 
@@ -253,4 +253,4 @@ type scene = {
   symmetries,
   shapes,
   shapeSymmetries,
-} /* }*/ /* type state = */ /*   //   tmp: option((shape, selection, pos))*/ /* //   shapes*/;
+};
