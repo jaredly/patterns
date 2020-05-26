@@ -166,6 +166,21 @@ type shapeSymm = {
 
 // ok
 
+type pos = {
+  x: float,
+  y: float,
+};
+
+type concreteShape =
+  | CLine({
+      p1: pos,
+      p2: pos,
+    })
+  | CCircle({
+      center: pos,
+      r: float,
+    });
+
 type shapeKind =
   //   | Point(string)
   | Line({
@@ -238,4 +253,4 @@ type scene = {
   symmetries,
   shapes,
   shapeSymmetries,
-} /* }*/ /* //   shapes*/ /*   //   tmp: option((shape, selection, pos))*/ /* type state = */;
+} /* }*/ /* type state = */ /*   //   tmp: option((shape, selection, pos))*/ /* //   shapes*/;

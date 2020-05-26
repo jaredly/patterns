@@ -11,6 +11,36 @@ open Types;
 //     }
 // }
 
+let s = Js.Float.toString;
+
+module Shape = {
+  [@react.component]
+  let make = (~shape, ~points, ~scene) => {
+    switch (shape) {
+    | Line({p1, p2}) =>
+      let (x1, y1, x2, y2) = Calculate.line(p1, p2, scene, points);
+      <line
+        x1={s(x1)}
+        y1={s(y1)}
+        x2={s(x2)}
+        y2={s(y2)}
+        strokeWidth="1"
+        stroke="red"
+      />;
+    | Circle({center, onEdge}) =>
+      let (cx, cy, r) = Calculate.circle(center, onEdge, scene, points);
+      <circle
+        cx={s(cx)}
+        cy={s(cy)}
+        r={s(r)}
+        fill="none"
+        strokeWidth="1"
+        stroke="red"
+      />;
+    };
+  };
+};
+
 let tblList = tbl => {
   Hashtbl.fold((k, v, l) => [(k, v), ...l], tbl, []);
 };
@@ -45,6 +75,10 @@ let make = (~scene: scene) => {
            fill="rgba(0,0,255,0.5"
          />
        })
+     ->React.array}
+    {scene.shapes
+     ->Belt.Map.String.toArray
+     ->Belt.Array.map(((k, shape)) => {<Shape key=k shape scene points />})
      ->React.array}
   </svg>;
 };

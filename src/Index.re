@@ -28,6 +28,11 @@ let scene = {
 
   let (scene, _sym) = scene->Point.sym(id3, Ref.id(id2), 6);
   let (scene, _sym) = scene->Point.sym(id1, Ref.id(id2), 6);
+
+  let (scene, s1) = scene->Shape.line(Ref.id(id1), Ref.id(id2));
+  let (scene, s2) = scene->Shape.circle(Ref.id(id1), Ref.id(id3));
+  let (scene, _sym) = scene->Shape.sym(s2, Ref.id(id2), 6);
+
   scene;
 };
 

@@ -12,6 +12,19 @@ let dpos = ((x1, y1), (x2, y2)) => {
   (dx, dy);
 };
 
+let toPos = ((x, y)) => {x, y};
+
+let rotateAround = (point, center, theta) => {
+  let diff = dpos(point, center);
+  let angle = angleTo(diff);
+  let mag = dist(diff);
+
+  (
+    fst(center) +. cos(theta +. angle) *. mag,
+    snd(center) +. sin(theta +. angle) *. mag,
+  );
+};
+
 // TODO this could infinite loop
 // Need to check for that.
 let rec resolvePoint = (id: reference, scene: scene, positions: positions) => {
@@ -109,4 +122,71 @@ let calculateAllPositions = scene => {
       })
     ->Belt.Array.concatMany;
   (positions, symPoints);
+};
+
+let symShapes = (scene, positions) => {
+  scene.shapeSymmetries
+  ->S.toArray
+  ->Belt.Array.map(((k, sym)) => {
+      let res = [||];
+      for (x in 1 to sym.count - 1) {
+        res
+        ->Js.Array2.push((
+            k,
+            resolvePoint(Api.Ref.sym(k, x), scene, positions),
+          ))
+        ->ignore;
+      };
+      res;
+    })
+  ->Belt.Array.concatMany;
+};
+
+// let rotateShape = (shape: concreteShape, center: (float, float), theta: float) => {
+//   switch shape {
+//     | CLine({p1, p2})
+//   }
+// }
+
+let shape = (shape: shapeKind, scene: scene, positions: positions) =>
+  switch (shape) {
+  | Line({p1, p2}) =>
+    let (x1, y1) = resolvePoint(p1, scene, positions);
+    let (x2, y2) = resolvePoint(p2, scene, positions);
+    CLine({
+      p1: {
+        x: x1,
+        y: y1,
+      },
+      p2: {
+        x: x2,
+        y: y2,
+      },
+    });
+  | Circle({center, onEdge}) =>
+    let (cx, cy) = resolvePoint(center, scene, positions);
+    let onEdge = resolvePoint(onEdge, scene, positions);
+
+    let r = dist(dpos((cx, cy), onEdge));
+    CCircle({
+      center: {
+        x: cx,
+        y: cy,
+      },
+      r,
+    });
+  };
+
+let line = (p1, p2, scene, positions) => {
+  let (x1, y1) = resolvePoint(p1, scene, positions);
+  let (x2, y2) = resolvePoint(p2, scene, positions);
+  (x1, y1, x2, y2);
+};
+
+let circle = (center, onEdge, scene, positions) => {
+  let (cx, cy) = resolvePoint(center, scene, positions);
+  let onEdge = resolvePoint(onEdge, scene, positions);
+
+  let r = dist(dpos((cx, cy), onEdge));
+  (cx, cy, r);
 };
