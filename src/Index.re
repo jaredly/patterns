@@ -6,16 +6,13 @@ let scene = {
   open Api;
   open Types;
   let scene = init();
-  let (scene, id2) = scene->Point.abs(150., 150.);
+  let (scene, id2) = scene->Point.abs(250., 250.);
   let (scene, id1) =
     scene->Point.abs(
       ~sym=Some({center: Ref.id(id2), count: 6}),
-      100.,
-      100.,
+      170.,
+      170.,
     );
-  // let (scene, sm1) = scene->Point.sym(id1, Ref.id(id2), 5);
-  // let (scene, id4) = scene->Point.line(Ref.id(id1), Ref.sym(sm1, 1), 0.5);
-  // let (scene, sm1) = scene->Point.sym(id4, Ref.id(id2), 10);
   let (scene, id3) =
     scene->Point.circle(
       ~sym=Some({center: Ref.id(id2), count: 6}),
@@ -27,32 +24,26 @@ let scene = {
   let (scene, id4) = scene->Point.line(Ref.id(id1), Ref.id(id3), 0.5);
   let (scene, id5) = scene->Point.line(Ref.id(id2), Ref.id(id1), 2.);
 
-  // let (scene, _sym) = scene->Point.sym(id3, Ref.id(id2), 6);
-  // let (scene, sym1) = scene->Point.sym(id1, Ref.id(id2), 6);
-
-  let (scene, s1) =
+  let (scene, _) =
     scene->Shape.line(
       ~sym=Some({center: Ref.id(id2), count: 6}),
       Ref.id(id5),
       Ref.sym(id1, 5),
     );
-  // let (scene, _sym) = scene->Shape.sym(s1, Ref.id(id2), 6);
 
-  let (scene, s2) =
+  let (scene, _) =
     scene->Shape.circle(
       ~sym=Some({center: Ref.id(id2), count: 6}),
       Ref.id(id1),
       Ref.id(id3),
     );
-  // let (scene, _sym) = scene->Shape.sym(s2, Ref.id(id2), 6);
 
-  let (scene, s2) =
+  let (scene, _) =
     scene->Shape.circle(
       ~sym=Some({center: Ref.id(id2), count: 6}),
       Ref.id(id4),
       Ref.id(id1),
     );
-  // let (scene, _sym) = scene->Shape.sym(s2, Ref.id(id2), 6);
 
   scene;
 };
