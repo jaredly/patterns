@@ -147,14 +147,14 @@ let calculateShapes = (scene, positions) => {
   ->Belt.Array.map(((k, {kind, sym})) => {
       let one = shape(kind, scene, positions);
       switch (sym) {
-      | None => [|((k, 0), one)|]
+      | None => [|({id: k, index: 0}, one)|]
       | Some(sym) =>
-        let res = [|((k, 0), one)|];
+        let res = [|({id: k, index: 0}, one)|];
         let by = Js.Math._PI *. 2. /. float_of_int(sym.count);
         for (x in 1 to sym.count - 1) {
           res
           ->Js.Array2.push((
-              (k, x),
+              {id: k, index: x},
               rotateShape(
                 one,
                 resolvePoint(sym.center, scene, positions),
@@ -204,13 +204,13 @@ let calculateAllPositions = scene => {
     ->Belt.Array.map(((key, v)) => {
         let one = getOrCalculatePoint(key, scene, positions);
         switch (v.sym) {
-        | None => [|((key, 0), one)|]
+        | None => [|({id: key, index: 0}, one)|]
         | Some(sym) =>
-          let res = [|((key, 0), one)|];
+          let res = [|({id: key, index: 0}, one)|];
           for (x in 1 to sym.count - 1) {
             res
             ->Js.Array2.push((
-                (key, x),
+                {id: key, index: x},
                 resolvePoint({id: key, index: x}, scene, positions),
               ))
             ->ignore;

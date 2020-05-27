@@ -229,8 +229,8 @@ type shapeKind =
 // };
 
 type selection =
-  | Point(reference)
-  | Shape(reference);
+  | Points(list(reference))
+  | Shape(list(reference));
 
 // type selection = {
 //   kind: kindSelection,

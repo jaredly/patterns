@@ -45,27 +45,27 @@ let tblList = tbl => {
   Hashtbl.fold((k, v, l) => [(k, v), ...l], tbl, []);
 };
 
-let toId = ((k, idx)) => k ++ "_" ++ string_of_int(idx);
+let toId = ({id, index}) => id ++ "_" ++ string_of_int(index);
+
+let isSelected = (selection, r) =>
+  switch (selection) {
+  | Some(Points(points)) => points->Belt.List.has(r, (==))
+  | _ => false
+  };
 
 [@react.component]
-let make = (~scene: scene) => {
-  let (positions, points, shapes) =
+let make =
+    (
+      ~scene: scene,
+      ~selection: option(selection),
+      ~selectPoint: reference => unit,
+    ) => {
+  let (_positions, points, shapes) =
     React.useMemo1(
       () => {Calculate.calculateAllPositions(scene)},
       [|scene|],
     );
   <svg width="500px" height="500px">
-    {points
-     ->Belt.Array.map((((k, idx), {x, y})) => {
-         <circle
-           key={toId((k, idx))}
-           cx={Js.Float.toString(x)}
-           cy={Js.Float.toString(y)}
-           r="4"
-           fill={idx == 0 ? "red" : "rgba(0,0,255,0.2)"}
-         />
-       })
-     ->React.array}
     // {symPoints
     //  ->Belt.Array.mapWithIndex((i, (id, {x, y})) => {
     //      <circle
@@ -77,10 +77,25 @@ let make = (~scene: scene) => {
     //      />
     //    })
     //  ->React.array}
-    {shapes
-     ->Belt.Array.map(((k, shape)) => <Shape key={toId(k)} shape />)
-     ->React.array}
-  </svg>;
+
+      {shapes
+       ->Belt.Array.map(((k, shape)) => <Shape key={toId(k)} shape />)
+       ->React.array}
+      {points
+       ->Belt.Array.map(((k, {x, y})) => {
+           <circle
+             key={toId(k)}
+             cx={Js.Float.toString(x)}
+             cy={Js.Float.toString(y)}
+             onClick={_ => selectPoint(k)}
+             r="4"
+             fill={k.index == 0 ? "red" : "rgba(0,0,255,0.2)"}
+             stroke="black"
+             strokeWidth={isSelected(selection, k) ? "3" : "0"}
+           />
+         })
+       ->React.array}
+    </svg>;
   // {symShapes
   //  ->Belt.Array.mapWithIndex((i, (k, shape)) =>
   //      <Shape key={string_of_int(i)} shape />

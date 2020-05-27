@@ -2,13 +2,6 @@
 
 [@bs.val] external document: Js.t({..}) = "document";
 
-module App = {
-  [@react.component]
-  let make = () => {
-    <div> {React.string("hi")} </div>;
-  };
-};
-
 let scene = {
   open Api;
   open Types;
@@ -64,4 +57,63 @@ let scene = {
   scene;
 };
 
-ReactDOMRe.render(<Canvas scene />, document##getElementById("root"));
+module App = {
+  type state = {
+    scene: Types.scene,
+    selection: option(Types.selection),
+    history: list(Types.scene),
+  };
+  let initial = {scene, selection: None, history: []};
+
+  let reduce = (state, action) => {
+    switch (action) {
+    | `Undo =>
+      switch (state.history) {
+      | [] => state
+      | [scene, ...history] => {scene, history, selection: None}
+      }
+    | `SelectPoint(reference) => {
+        ...state,
+        selection:
+          switch (state.selection) {
+          | Some(Points(p)) =>
+            if (p->Belt.List.has(reference, (==))) {
+              Some(Points(p->Belt.List.keep(k => k != reference)));
+            } else {
+              Some(Points([reference, ...p]));
+            }
+          | _ => Some(Points([reference]))
+          },
+      }
+    | `SetSelection(selection) => {...state, selection}
+    | `SetScene(scene) => {
+        ...state,
+        scene,
+        history: [state.scene, ...state.history],
+      }
+    };
+  };
+
+  [@react.component]
+  let make = () => {
+    let (state, dispatch) = React.useReducer(reduce, initial);
+    // let (scene, updateScene) = React.useState(() => scene);
+    // let (selection, setSelection) = React.useState(() => None);
+    <div>
+      <Canvas
+        scene={state.scene}
+        selection={state.selection}
+        selectPoint={res => dispatch(`SelectPoint(res))}
+      />
+      <Controls
+        selection={state.selection}
+        setSelection={s => dispatch(`SetSelection(s))}
+        scene={state.scene}
+        setScene={s => dispatch(`SetScene(s))}
+        onUndo={() => dispatch(`Undo)}
+      />
+    </div>;
+  };
+};
+
+ReactDOMRe.render(<App />, document##getElementById("root"));
