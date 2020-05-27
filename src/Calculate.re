@@ -15,14 +15,14 @@ let dpos = (p1, p2) => {
 let toPos = ((x, y)) => {x, y};
 
 let rotateAround = (point, center, theta) => {
-  let diff = dpos(point, center);
+  let diff = dpos(center, point);
   let angle = angleTo(diff);
   let mag = dist(diff);
 
-  (
-    center.x +. cos(theta +. angle) *. mag,
-    center.y +. sin(theta +. angle) *. mag,
-  );
+  {
+    x: center.x +. cos(theta +. angle) *. mag,
+    y: center.y +. sin(theta +. angle) *. mag,
+  };
 };
 
 // TODO this could infinite loop
@@ -101,6 +101,60 @@ and calculatePoint = (point: point, scene: scene, positions: positions) => {
 
 module S = Belt.Map.String;
 
+let shape = (shape: shapeKind, scene: scene, positions: positions) =>
+  switch (shape) {
+  | Line({p1, p2}) =>
+    let p1 = resolvePoint(p1, scene, positions);
+    let p2 = resolvePoint(p2, scene, positions);
+    CLine({p1, p2});
+  | Circle({center, onEdge}) =>
+    let c = resolvePoint(center, scene, positions);
+    let onEdge = resolvePoint(onEdge, scene, positions);
+
+    let r = dist(dpos(c, onEdge));
+    CCircle({center: c, r});
+  };
+
+let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
+  switch (shape) {
+  | CLine({p1, p2}) =>
+    CLine({
+      p1: rotateAround(p1, center, theta),
+      p2: rotateAround(p2, center, theta),
+    })
+  | CCircle({center: ccenter, r}) =>
+    CCircle({center: rotateAround(ccenter, center, theta), r})
+  };
+};
+
+let calculateShapes = (scene, positions) => {
+  let shapesMap = scene.shapes->S.map(s => shape(s, scene, positions));
+  let syms =
+    scene.shapeSymmetries
+    ->S.toArray
+    ->Belt.Array.map(((k, sym)) => {
+        let shape = shapesMap->S.getExn(sym.shape);
+        let res = [||];
+        let by = Js.Math._PI *. 2. /. float_of_int(sym.count);
+        for (x in 1 to sym.count - 1) {
+          res
+          ->Js.Array2.push((
+              k,
+              rotateShape(
+                shape,
+                resolvePoint(sym.center, scene, positions),
+                by *. float_of_int(x),
+                // 0.,
+              ),
+            ))
+          ->ignore;
+        };
+        res;
+      })
+    ->Belt.Array.concatMany;
+  (shapesMap->S.toArray, syms);
+};
+
 // Hmm this should include symmetry positions too I guess.
 let calculateAllPositions = scene => {
   let positions = Hashtbl.create(Belt.Map.String.size(scene.points));
@@ -124,46 +178,9 @@ let calculateAllPositions = scene => {
         res;
       })
     ->Belt.Array.concatMany;
-  (positions, symPoints);
+  let (shapes, symShapes) = calculateShapes(scene, positions);
+  (positions, symPoints, shapes, symShapes);
 };
-
-let symShapes = (scene, positions) => {
-  scene.shapeSymmetries
-  ->S.toArray
-  ->Belt.Array.map(((k, sym)) => {
-      let res = [||];
-      for (x in 1 to sym.count - 1) {
-        res
-        ->Js.Array2.push((
-            k,
-            resolvePoint(Api.Ref.sym(k, x), scene, positions),
-          ))
-        ->ignore;
-      };
-      res;
-    })
-  ->Belt.Array.concatMany;
-};
-
-// let rotateShape = (shape: concreteShape, center: (float, float), theta: float) => {
-//   switch shape {
-//     | CLine({p1, p2})
-//   }
-// }
-
-let shape = (shape: shapeKind, scene: scene, positions: positions) =>
-  switch (shape) {
-  | Line({p1, p2}) =>
-    let p1 = resolvePoint(p1, scene, positions);
-    let p2 = resolvePoint(p2, scene, positions);
-    CLine({p1, p2});
-  | Circle({center, onEdge}) =>
-    let c = resolvePoint(center, scene, positions);
-    let onEdge = resolvePoint(onEdge, scene, positions);
-
-    let r = dist(dpos(c, onEdge));
-    CCircle({center: c, r});
-  };
 
 /**  ok */;
 // let line = (p1, p2, scene, positions) => {
