@@ -45,46 +45,47 @@ let tblList = tbl => {
   Hashtbl.fold((k, v, l) => [(k, v), ...l], tbl, []);
 };
 
+let toId = ((k, idx)) => k ++ "_" ++ string_of_int(idx);
+
 [@react.component]
 let make = (~scene: scene) => {
-  let (points, symPoints, shapes, symShapes) =
+  let (positions, points, shapes) =
     React.useMemo1(
       () => {Calculate.calculateAllPositions(scene)},
       [|scene|],
     );
   <svg width="500px" height="500px">
-    {tblList(points)
-     ->Belt.List.toArray
-     ->Belt.Array.map(((id, {x, y})) => {
+    {points
+     ->Belt.Array.map((((k, idx), {x, y})) => {
          <circle
-           key=id
+           key={toId((k, idx))}
            cx={Js.Float.toString(x)}
            cy={Js.Float.toString(y)}
            r="4"
-           fill="red"
+           fill={idx == 0 ? "red" : "rgba(0,0,255,0.2)"}
          />
        })
      ->React.array}
-    {symPoints
-     ->Belt.Array.mapWithIndex((i, (id, {x, y})) => {
-         <circle
-           key={string_of_int(i)}
-           cx={Js.Float.toString(x)}
-           cy={Js.Float.toString(y)}
-           r="4"
-           fill="rgba(0,0,255,0.5"
-         />
-       })
-     ->React.array}
+    // {symPoints
+    //  ->Belt.Array.mapWithIndex((i, (id, {x, y})) => {
+    //      <circle
+    //        key={string_of_int(i)}
+    //        cx={Js.Float.toString(x)}
+    //        cy={Js.Float.toString(y)}
+    //        r="4"
+    //        fill="rgba(0,0,255,0.5"
+    //      />
+    //    })
+    //  ->React.array}
     {shapes
-     ->Belt.Array.map(((k, shape)) => <Shape key=k shape />)
-     ->React.array}
-    {symShapes
-     ->Belt.Array.mapWithIndex((i, (k, shape)) =>
-         <Shape key={string_of_int(i)} shape />
-       )
+     ->Belt.Array.map(((k, shape)) => <Shape key={toId(k)} shape />)
      ->React.array}
   </svg>;
+  // {symShapes
+  //  ->Belt.Array.mapWithIndex((i, (k, shape)) =>
+  //      <Shape key={string_of_int(i)} shape />
+  //    )
+  //  ->React.array}
   // {scene.shapes
   //  ->Belt.Map.String.toArray
   //  ->Belt.Array.map(((k, shape)) => {<Shape key=k shape scene points />})

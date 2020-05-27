@@ -62,17 +62,12 @@ type percentOrAbs =
 // or "virtual", which is like "the nth symmetry around x point"?
 // Orr wait I keep track of symmetries too ...
 // Where a symmetry references a center point and has a count.
-type reference =
-  | Actual(string)
-  | Virtual({
-      // hmm but this way a symmetry doesn't know about what's using it.
-      // Would it work to just be "symmetry, nth point of that"
-      // Yeah sounds reasonable.
-      symmetry: string,
-      index: int,
-    });
+type reference = {
+  id: string,
+  index: int,
+};
 
-type point =
+type pointPos =
   | Abs({
       x: float,
       y: float,
@@ -107,16 +102,16 @@ type point =
 
 type symm = {
   center: reference,
-  point: string,
+  // point: string,
   count: int,
 };
 
-type shapeSymm = {
-  center: reference,
-  shape: string,
-  count: int,
-  // missing: list(int) // should be a set
-};
+// type shapeSymm = {
+//   center: reference,
+//   // shape: string,
+//   count: int,
+//   // missing: list(int) // should be a set
+// };
 
 // Do we have point symmetries, and, separately, shape symmetries?
 // Yes I believe so, because shape symmetries can be "broken", right?
@@ -234,23 +229,32 @@ type shapeKind =
 // };
 
 type selection =
-  | Point(string)
-  | Shape(string);
+  | Point(reference)
+  | Shape(reference);
 
 // type selection = {
 //   kind: kindSelection,
 //   sym: symmetrySelection,
 // };
 
+type point = {
+  pos: pointPos,
+  sym: option(symm),
+};
+type shape = {
+  kind: shapeKind,
+  sym: option(symm),
+};
+
 type points = Belt.Map.String.t(point);
-type symmetries = Belt.Map.String.t(symm);
+// type symmetries = Belt.Map.String.t(symm);
 type positions = Hashtbl.t(string, pos);
-type shapes = Belt.Map.String.t(shapeKind);
-type shapeSymmetries = Belt.Map.String.t(shapeSymm);
+type shapes = Belt.Map.String.t(shape);
+// type shapeSymmetries = Belt.Map.String.t(shapeSymm);
 
 type scene = {
   points,
-  symmetries,
+  // symmetries,
   shapes,
-  shapeSymmetries,
+  // shapeSymmetries,
 };
