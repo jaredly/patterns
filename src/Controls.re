@@ -12,6 +12,7 @@ let buttonsForShapes = (shapes, scene, setSelection, setScene, setColor) => {
         ("Black", () => setColors(setColor, shapes, Some("#000"))),
         ("Gray", () => setColors(setColor, shapes, Some("#aaa"))),
         ("Light", () => setColors(setColor, shapes, Some("#ccc"))),
+        ("Trace", () => setColors(setColor, shapes, Some("#eee"))),
         ("Fade", () => setColors(setColor, shapes, None)),
       ];
   let positions = Hashtbl.create(10);
@@ -22,8 +23,21 @@ let buttonsForShapes = (shapes, scene, setSelection, setScene, setColor) => {
         (r, Calculate.resolveShape(scene, r, positions))
       })
     ) {
-    | []
-    | [_] => []
+    | [] => []
+    | [(s, _)] => [
+        (
+          "Remove shape",
+          (
+            () => {
+              setSelection(None);
+              setScene({
+                ...scene,
+                shapes: scene.shapes->Belt.Map.String.remove(s.Types.id),
+              });
+            }
+          ),
+        ),
+      ]
     | [(s1, CCircle(l1)), (_, CCircle(l2))] => [
         (
           "Add points at intersections",

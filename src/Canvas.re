@@ -13,6 +13,8 @@ open Types;
 
 let s = Js.Float.toString;
 
+let normalizeTheta = t => t < 0. ? Js.Math._PI *. 2. +. t : t;
+
 module Shape = {
   module Inner = {
     [@react.component]
@@ -55,13 +57,13 @@ module Shape = {
             {|M %0.2f %0.2f
             A %0.2f %0.2f
             0
-            0 1
+            %d 1
             %0.2f %0.2f|},
             start.x,
             start.y,
             r,
             r,
-            //
+            normalizeTheta(theta1 -. theta0) > Js.Math._PI ? 1 : 0,
             endd.x,
             endd.y,
           )}
@@ -80,7 +82,7 @@ module Shape = {
       shape
       onClick={_ => onSelect()}
       style={ReactDOMRe.Style.make(~cursor="pointer", ())}
-      strokeWidth={isSelected ? "4" : "2"}
+      strokeWidth={isSelected ? "4" : "1"}
       stroke={
         switch (color) {
         | None => "rgba(255, 0, 255, 0.1)"

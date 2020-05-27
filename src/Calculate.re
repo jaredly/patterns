@@ -47,6 +47,7 @@ let generic = (p1, p2) => {
   (m, b);
 };
 
+// algorithm based on this fantastic answer https://stackoverflow.com/a/3349134
 let intersectCircles = (ac, ar, bc, br) => {
   let ratio = ar /. (ar +. br);
   let diff = dpos(ac, bc);
@@ -70,56 +71,18 @@ let intersectCircles = (ac, ar, bc, br) => {
       },
     ];
   };
-  // x3 = x2 +- h ( y1 - y0 ) / d
-  // y3 = y2 -+ h ( x1 - x0 ) / d
-  // (x - h)^2 + (y - k)^2 = r^2
-  // (x - ah)^2 + (y - ak)^2 = ar^2
-  // (x - bh)^2 + (y - bk)^2 = br^2
-  // x = +-sqrt(br^2 - (y - bk^2)) + bh
-  // x = +-sqrt(ar^2 - (y - ak^2)) + ah
 };
 
 let intersection = (ap1, ap2, bp1, bp2) => {
   let (m1, b1) = generic(ap1, ap2);
   let (m2, b2) = generic(bp1, bp2);
-
-  let x = (b2 -. b1) /. (m1 -. m2);
-  let y = m1 *. x +. b1;
-  Some({x, y});
-  // let d1 = dpos(p1, p2);
-  // let d2 = dpos(p3, p4);
-  // Js.log([|p1, p2, p3, p4, d1, d2|]);
-  // if (d1.x == 0.) {
-  //   Js.log("No d1x");
-  //   None; // TODO
-  // } else {
-  //   // y = mx + b
-  //   // b = y - mx
-  //   let m1 = d1.y /. d1.x;
-  //   let b1 = p1.y -. m1 *. p1.x;
-  //   if (d2.x == 0.) {
-  //     Js.log("No d2x");
-  //     Some({x: p3.x, y: m1 *. p3.x +. b1});
-  //   } else {
-  //     let m2 = d2.y /. d2.x;
-  //     let b2 = p2.y -. m2 *. p2.x;
-  //     // y = m1 * x + b1
-  //     // y = m2 * x + b2
-  //     // m1x + b1 = m2x + b2
-  //     // m1 * x - m2 * x = b2 - b1
-  //     // (m1 - m2)x = b2 - b1
-  //     // x = (b2 - b1) / (m1 - m2)
-  //     if (m1 == m2) {
-  //       None;
-  //     } else {
-  //       let x = (b2 -. b1) /. (m1 -. m2);
-  //       Js.log([|x, b2, b1, m1, m2|]);
-  //       // let y = m1 *. x +. b1;
-  //       let y = m2 *. x +. b2;
-  //       Some({x, y});
-  //     };
-  //   };
-  // };
+  if (m1 == m2) {
+    None;
+  } else {
+    let x = (b2 -. b1) /. (m1 -. m2);
+    let y = m1 *. x +. b1;
+    Some({x, y});
+  };
 };
 
 // TODO this could infinite loop
