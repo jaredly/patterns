@@ -1,60 +1,74 @@
 open Types;
 open Api;
 
+let setColors = (setColor, shapes, color) =>
+  shapes->Belt.List.forEach(r => setColor(r, color));
+
 let buttonsForShapes = (shapes, scene, setSelection, setScene, setColor) => {
+  let colors =
+    shapes == []
+      ? []
+      : [
+        ("Black", () => setColors(setColor, shapes, Some("#000"))),
+        ("Gray", () => setColors(setColor, shapes, Some("#aaa"))),
+        ("Light", () => setColors(setColor, shapes, Some("#ccc"))),
+        ("Fade", () => setColors(setColor, shapes, None)),
+      ];
   let positions = Hashtbl.create(10);
-  switch (
-    shapes->Belt.List.map(r => {
-      (r, Calculate.resolveShape(scene, r, positions))
-    })
-  ) {
-  | [] => []
-  | [(s, _)] => [
-      ("Black", (() => setColor(s, Some("#000")))),
-      ("Fade", (() => setColor(s, None))),
-    ]
-  | [(s1, CCircle(l1)), (_, CCircle(l2))] => [
-      (
-        "Add points at intersections",
+  colors
+  @ (
+    switch (
+      shapes->Belt.List.map(r => {
+        (r, Calculate.resolveShape(scene, r, positions))
+      })
+    ) {
+    | []
+    | [_] => []
+    | [(s1, CCircle(l1)), (_, CCircle(l2))] => [
         (
-          () => {
-            let cross =
-              Calculate.intersectCircles(l1.center, l1.r, l2.center, l2.r);
-            let {sym} = scene.shapes->Belt.Map.String.getExn(s1.id);
-            let (scene, sels) =
-              cross->Belt.List.reduce(
-                (scene, []),
-                ((scene, sels), pos) => {
-                  let (scene, id) = scene->Api.Point.abs(~sym, pos.x, pos.y);
-                  (scene, [{id, index: 0}, ...sels]);
-                },
-              );
-            setScene(scene);
-            setSelection(Some(Points(sels)));
-          }
-        ),
-      ),
-    ]
-  | [(s1, CLine(l1)), (_, CLine(l2))] => [
-      (
-        "Add point at intersection",
-        (
-          () => {
-            let cross = Calculate.intersection(l1.p1, l1.p2, l2.p1, l2.p2);
-            switch (cross) {
-            | None => ()
-            | Some(cross) =>
+          "Add points at intersections",
+          (
+            () => {
+              let cross =
+                Calculate.intersectCircles(l1.center, l1.r, l2.center, l2.r);
               let {sym} = scene.shapes->Belt.Map.String.getExn(s1.id);
-              let (scene, id) = scene->Api.Point.abs(~sym, cross.x, cross.y);
+              let (scene, sels) =
+                cross->Belt.List.reduce(
+                  (scene, []),
+                  ((scene, sels), pos) => {
+                    let (scene, id) =
+                      scene->Api.Point.abs(~sym, pos.x, pos.y);
+                    (scene, [{id, index: 0}, ...sels]);
+                  },
+                );
               setScene(scene);
-              setSelection(Some(Points([{id, index: 0}])));
-            };
-          }
+              setSelection(Some(Points(sels)));
+            }
+          ),
         ),
-      ),
-    ]
-  | _ => []
-  };
+      ]
+    | [(s1, CLine(l1)), (_, CLine(l2))] => [
+        (
+          "Add point at intersection",
+          (
+            () => {
+              let cross = Calculate.intersection(l1.p1, l1.p2, l2.p1, l2.p2);
+              switch (cross) {
+              | None => ()
+              | Some(cross) =>
+                let {sym} = scene.shapes->Belt.Map.String.getExn(s1.id);
+                let (scene, id) =
+                  scene->Api.Point.abs(~sym, cross.x, cross.y);
+                setScene(scene);
+                setSelection(Some(Points([{id, index: 0}])));
+              };
+            }
+          ),
+        ),
+      ]
+    | _ => []
+    }
+  );
 };
 
 let buttonsForPoints = (points, scene, setSelection, setScene) => {

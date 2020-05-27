@@ -53,7 +53,7 @@ module Shape = {
       strokeWidth={isSelected ? "4" : "2"}
       stroke={
         switch (color) {
-        | None => "#eee"
+        | None => "rgba(255, 0, 255, 0.1)"
         | Some(c) => c
         }
       }
