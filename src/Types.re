@@ -230,7 +230,7 @@ type shapeKind =
 
 type selection =
   | Points(list(reference))
-  | Shape(list(reference));
+  | Shapes(list(reference));
 
 // type selection = {
 //   kind: kindSelection,
@@ -244,6 +244,7 @@ type point = {
 type shape = {
   kind: shapeKind,
   sym: option(symm),
+  color: option(string),
 };
 
 type points = Belt.Map.String.t(point);

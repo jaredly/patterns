@@ -24,6 +24,103 @@ let rotateAround = (point, center, theta) => {
     y: center.y +. sin(theta +. angle) *. mag,
   };
 };
+/*
+
+ y = mx + b
+
+
+ y = 1x + 1
+ y = -0.5x + 4
+
+ 1x + 1 = -0.5x + 4
+
+ (1 - -0.5) x = 4 - 1
+
+ x = 3 / 1.5 = 4.5
+
+
+ */
+
+let generic = (p1, p2) => {
+  let m = (p2.y -. p1.y) /. (p2.x -. p1.x);
+  let b = p1.y -. m *. p1.x;
+  (m, b);
+};
+
+let intersectCircles = (ac, ar, bc, br) => {
+  let ratio = ar /. (ar +. br);
+  let diff = dpos(ac, bc);
+  let dist = dist(diff);
+  let middle = {x: ac.x +. diff.x *. ratio, y: ac.y +. diff.y *. ratio};
+  if (dist > ar +. br) {
+    [];
+  } else if (dist == ar *. br) {
+    [middle];
+  } else {
+    let a = (ar *. ar -. br *. br +. dist *. dist) /. (2. *. dist);
+    let h = sqrt(ar *. ar -. a *. a);
+    [
+      {
+        x: middle.x +. h *. (bc.y -. ac.y) /. dist,
+        y: middle.y -. h *. (bc.x -. ac.x) /. dist,
+      },
+      {
+        x: middle.x -. h *. (bc.y -. ac.y) /. dist,
+        y: middle.y +. h *. (bc.x -. ac.x) /. dist,
+      },
+    ];
+  };
+  // x3 = x2 +- h ( y1 - y0 ) / d
+  // y3 = y2 -+ h ( x1 - x0 ) / d
+  // (x - h)^2 + (y - k)^2 = r^2
+  // (x - ah)^2 + (y - ak)^2 = ar^2
+  // (x - bh)^2 + (y - bk)^2 = br^2
+  // x = +-sqrt(br^2 - (y - bk^2)) + bh
+  // x = +-sqrt(ar^2 - (y - ak^2)) + ah
+};
+
+let intersection = (ap1, ap2, bp1, bp2) => {
+  let (m1, b1) = generic(ap1, ap2);
+  let (m2, b2) = generic(bp1, bp2);
+
+  let x = (b2 -. b1) /. (m1 -. m2);
+  let y = m1 *. x +. b1;
+  Some({x, y});
+  // let d1 = dpos(p1, p2);
+  // let d2 = dpos(p3, p4);
+  // Js.log([|p1, p2, p3, p4, d1, d2|]);
+  // if (d1.x == 0.) {
+  //   Js.log("No d1x");
+  //   None; // TODO
+  // } else {
+  //   // y = mx + b
+  //   // b = y - mx
+  //   let m1 = d1.y /. d1.x;
+  //   let b1 = p1.y -. m1 *. p1.x;
+  //   if (d2.x == 0.) {
+  //     Js.log("No d2x");
+  //     Some({x: p3.x, y: m1 *. p3.x +. b1});
+  //   } else {
+  //     let m2 = d2.y /. d2.x;
+  //     let b2 = p2.y -. m2 *. p2.x;
+  //     // y = m1 * x + b1
+  //     // y = m2 * x + b2
+  //     // m1x + b1 = m2x + b2
+  //     // m1 * x - m2 * x = b2 - b1
+  //     // (m1 - m2)x = b2 - b1
+  //     // x = (b2 - b1) / (m1 - m2)
+  //     if (m1 == m2) {
+  //       None;
+  //     } else {
+  //       let x = (b2 -. b1) /. (m1 -. m2);
+  //       Js.log([|x, b2, b1, m1, m2|]);
+  //       // let y = m1 *. x +. b1;
+  //       let y = m2 *. x +. b2;
+  //       Some({x, y});
+  //     };
+  //   };
+  // };
+};
 
 // TODO this could infinite loop
 // Need to check for that.
@@ -141,15 +238,34 @@ let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
   };
 };
 
+let resolveShape = (scene, ref, positions) => {
+  let {kind, sym} = scene.shapes->S.getExn(ref.id);
+  let base = shape(kind, scene, positions);
+  if (ref.index == 0) {
+    base;
+  } else {
+    switch (sym) {
+    | None => failwith("no symmetry")
+    | Some(sym) =>
+      let by = Js.Math._PI *. 2. /. float_of_int(sym.count);
+      rotateShape(
+        base,
+        resolvePoint(sym.center, scene, positions),
+        by *. float_of_int(ref.index),
+      );
+    };
+  };
+};
+
 let calculateShapes = (scene, positions) => {
   scene.shapes
   ->S.toArray
-  ->Belt.Array.map(((k, {kind, sym})) => {
+  ->Belt.Array.map(((k, {kind, sym, color})) => {
       let one = shape(kind, scene, positions);
       switch (sym) {
-      | None => [|({id: k, index: 0}, one)|]
+      | None => [|({id: k, index: 0}, one, color)|]
       | Some(sym) =>
-        let res = [|({id: k, index: 0}, one)|];
+        let res = [|({id: k, index: 0}, one, color)|];
         let by = Js.Math._PI *. 2. /. float_of_int(sym.count);
         for (x in 1 to sym.count - 1) {
           res
@@ -161,6 +277,7 @@ let calculateShapes = (scene, positions) => {
                 by *. float_of_int(x),
                 // 0.,
               ),
+              color,
             ))
           ->ignore;
         };

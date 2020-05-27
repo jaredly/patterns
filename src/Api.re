@@ -10,10 +10,14 @@ let init = () => {
   // shapeSymmetries: empty,
 };
 
+[@bs.send] external padStart: (string, int, string) => string = "padStart";
+
 let genId = () =>
-  Js.Math.random()
-  ->Js.Float.toStringWithRadix(~radix=36)
-  ->Js.String2.sliceToEnd(~from=2);
+  Js.Date.now()->Js.Float.toStringWithRadix(~radix=36)->padStart(10, "0")
+  ++ "-"
+  ++ Js.Math.random()
+     ->Js.Float.toStringWithRadix(~radix=36)
+     ->Js.String2.sliceToEnd(~from=2);
 
 let percent = x => Percent(x);
 
@@ -26,6 +30,7 @@ module Point = {
   let add = (scene, ~sym=None, pos) => {
     let point = {pos, sym};
     let id = genId();
+    Js.log(id);
     ({...scene, points: S.set(scene.points, id, point)}, id);
   };
   let abs = (scene, ~sym=None, x, y) => add(scene, ~sym, Abs({x, y}));
@@ -50,8 +55,13 @@ module Point = {
 };
 
 module Shape = {
+  let setColor = (scene, id, color) => {
+    Js.log2(id, S.keysToArray(scene.shapes));
+    let shape = scene.shapes->S.getExn(id);
+    {...scene, shapes: scene.shapes->S.set(id, {...shape, color})};
+  };
   let add = (scene, ~sym=None, shape) => {
-    let shape = {kind: shape, sym};
+    let shape = {kind: shape, sym, color: None};
     let id = genId();
     ({...scene, shapes: S.set(scene.shapes, id, shape)}, id);
   };
