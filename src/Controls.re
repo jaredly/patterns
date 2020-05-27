@@ -122,6 +122,19 @@ let buttonsForPoints = (points, scene, setSelection, setScene) => {
         ),
       ),
     ]
+  | [p1, p2, p3] => [
+      (
+        "Add circle part",
+        (
+          () => {
+            let {pos: _, sym} = Belt.Map.String.getExn(scene.points, p1.id);
+            let (scene, id) = scene->Api.Shape.circlePart(~sym, p3, p2, p1);
+            setScene(scene);
+            setSelection(Some(Shapes([{id, index: 0}])));
+          }
+        ),
+      ),
+    ]
   | _ => []
   };
 };

@@ -129,7 +129,7 @@ let rec resolvePoint = (id: reference, scene: scene, positions: positions) => {
   if (id.index == 0) {
     base;
   } else {
-    let {pos, sym} = Belt.Map.String.getExn(scene.points, id.id);
+    let {pos: _, sym} = Belt.Map.String.getExn(scene.points, id.id);
     switch (sym) {
     | None => failwith("No symmetry")
     | Some({center, count}) =>
@@ -224,6 +224,15 @@ let shape = (shape: shapeKind, scene: scene, positions: positions) =>
 
     let r = dist(dpos(c, onEdge));
     CCircle({center: c, r});
+  | CirclePart({center, onEdge, goUntil}) =>
+    let c = resolvePoint(center, scene, positions);
+    let onEdge = resolvePoint(onEdge, scene, positions);
+    let goUntil = resolvePoint(goUntil, scene, positions);
+
+    let r = dist(dpos(c, onEdge));
+    let theta0 = angleTo(dpos(c, onEdge));
+    let theta1 = angleTo(dpos(c, goUntil));
+    CCirclePart({center: c, r, theta0, theta1});
   };
 
 let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
@@ -235,6 +244,13 @@ let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
     })
   | CCircle({center: ccenter, r}) =>
     CCircle({center: rotateAround(ccenter, center, theta), r})
+  | CCirclePart({center: ccenter, r, theta0, theta1}) =>
+    CCirclePart({
+      center: rotateAround(ccenter, center, theta),
+      r,
+      theta0: theta0 +. theta,
+      theta1: theta1 +. theta,
+    })
   };
 };
 

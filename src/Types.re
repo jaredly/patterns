@@ -174,6 +174,12 @@ type concreteShape =
   | CCircle({
       center: pos,
       r: float,
+    })
+  | CCirclePart({
+      center: pos,
+      r: float,
+      theta0: float,
+      theta1: float,
     });
 
 type shapeKind =
@@ -185,6 +191,12 @@ type shapeKind =
   | Circle({
       center: reference,
       onEdge: reference,
+    })
+  | CirclePart({
+      // always clockwise, folks.
+      center: reference,
+      onEdge: reference,
+      goUntil: reference,
     });
 //   | Arc({
 //       p1: string,

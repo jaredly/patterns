@@ -40,6 +40,36 @@ module Shape = {
           style
           stroke
         />
+      | CCirclePart({center, r, theta0, theta1}) =>
+        let start = {
+          x: center.x +. cos(theta0) *. r,
+          y: center.y +. sin(theta0) *. r,
+        };
+        let endd = {
+          x: center.x +. cos(theta1) *. r,
+          y: center.y +. sin(theta1) *. r,
+        };
+        <path
+          onClick
+          d={Printf.sprintf(
+            {|M %0.2f %0.2f
+            A %0.2f %0.2f
+            0
+            0 1
+            %0.2f %0.2f|},
+            start.x,
+            start.y,
+            r,
+            r,
+            //
+            endd.x,
+            endd.y,
+          )}
+          fill="none"
+          strokeWidth
+          style
+          stroke
+        />;
       };
     };
   };

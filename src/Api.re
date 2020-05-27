@@ -68,6 +68,8 @@ module Shape = {
   let line = (scene, ~sym=None, p1, p2) => add(scene, ~sym, Line({p1, p2}));
   let circle = (scene, ~sym=None, center, onEdge) =>
     add(scene, ~sym, Circle({center, onEdge}));
+  let circlePart = (scene, ~sym=None, center, onEdge, goUntil) =>
+    add(scene, ~sym, CirclePart({center, onEdge, goUntil}));
   // let sym = (scene, shape, center, count) => {
   //   let id = genId();
   //   (
