@@ -111,18 +111,29 @@ module Shape = {
 
   [@react.component]
   let make = (~shape, ~color, ~isSelected, ~onSelect) => {
-    <Inner
-      shape
-      onClick={_ => onSelect()}
-      style={ReactDOMRe.Style.make(~cursor="pointer", ())}
-      strokeWidth={isSelected ? "4" : "1"}
-      stroke={
-        switch (color) {
-        | None => "rgba(255, 0, 255, 0.1)"
-        | Some(c) => c
-        }
-      }
-    />;
+    <React.Fragment>
+
+        <Inner
+          shape
+          onClick={_ => onSelect()}
+          style={ReactDOMRe.Style.make(~cursor="pointer", ())}
+          strokeWidth="4"
+          stroke={isSelected ? "rgba(0, 255, 0, 0.5)" : "rgba(0,0,0,0)"}
+        />
+        <Inner
+          shape
+          onClick={_ => onSelect()}
+          style={ReactDOMRe.Style.make(~cursor="pointer", ())}
+          strokeWidth="1"
+          stroke={
+            switch (color) {
+            | None => "rgba(255, 0, 255, 0.1)"
+            | Some(c) => c
+            }
+          }
+        />
+      </React.Fragment>;
+      // {isSelected
   };
 };
 

@@ -277,7 +277,7 @@ let make =
             let (scene, center) = scene->Api.Point.abs(250., 250.);
             let (scene, _) =
               scene->Api.Point.abs(
-                ~sym=Some({center: Api.Ref.id(center), count: 10}),
+                ~sym=Some({center: Api.Ref.id(center), count: 12}),
                 250.,
                 150.,
               );
