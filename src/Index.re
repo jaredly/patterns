@@ -7,7 +7,7 @@ let scene = {
   open Types;
   let scene = init();
   let (scene, id2) = scene->Point.abs(250., 250.);
-  let (scene, id1) =
+  let (scene, _id1) =
     scene->Point.abs(
       ~sym=Some({center: Ref.id(id2), count: 5}),
       200.,

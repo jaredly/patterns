@@ -77,6 +77,17 @@ type pointPos =
       dest: reference,
       percentOrAbs,
     })
+  | Rotate({
+      source: reference,
+      dest: reference,
+      theta: float,
+    })
+  | RotateBetween({
+      one: reference,
+      middle: reference,
+      two: reference,
+      amount: float,
+    })
   | Circle({
       center: reference,
       onEdge: reference, // this is the second point needed to define the circle
@@ -166,6 +177,12 @@ type pos = {
   y: float,
 };
 
+type ccirclePart = {
+  to_: pos,
+  r: float,
+  sweep: bool,
+};
+
 type concreteShape =
   | CLine({
       p1: pos,
@@ -181,6 +198,21 @@ type concreteShape =
       theta0: float,
       theta1: float,
     });
+// | CPoly({
+//     p0: pos,
+//     items: list([ | `Line(pos) | `Arc(ccirclePart)]),
+//   });
+
+type lineOpts = {
+  p1: reference,
+  p2: reference,
+};
+type circlePartOpts = {
+  // always clockwise, folks.
+  center: reference,
+  onEdge: reference,
+  goUntil: reference,
+};
 
 type shapeKind =
   //   | Point(string)
@@ -198,6 +230,8 @@ type shapeKind =
       onEdge: reference,
       goUntil: reference,
     });
+// | Poly(list([ | `Line(lineOpts) | `CirclePart(circlePartOpts)]));
+
 //   | Arc({
 //       p1: string,
 //       p2: string,

@@ -36,6 +36,10 @@ module Point = {
   let abs = (scene, ~sym=None, x, y) => add(scene, ~sym, Abs({x, y}));
   let line = (scene, ~sym=None, source, dest, percent) =>
     add(scene, ~sym, Line({source, dest, percentOrAbs: Percent(percent)}));
+  let rotateBetween = (scene, ~sym=None, one, middle, two, amount) =>
+    add(scene, ~sym, RotateBetween({one, middle, two, amount}));
+  let rotate = (scene, ~sym=None, source, dest, theta) =>
+    add(scene, ~sym, Rotate({source, dest, theta}));
   let circle = (scene, ~sym=None, center, onEdge, angle, offset) =>
     add(
       scene,
@@ -70,6 +74,7 @@ module Shape = {
     add(scene, ~sym, Circle({center, onEdge}));
   let circlePart = (scene, ~sym=None, center, onEdge, goUntil) =>
     add(scene, ~sym, CirclePart({center, onEdge, goUntil}));
+  // let poly = (scene, ~sym=None, items) => add(scene, ~sym, Poly(items));
   // let sym = (scene, shape, center, count) => {
   //   let id = genId();
   //   (

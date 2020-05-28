@@ -1,5 +1,4 @@
 open Types;
-open Api;
 
 let setColors = (setColor, shapes, color) =>
   shapes->Belt.List.forEach(r => setColor(r, color));
@@ -61,6 +60,26 @@ let buttonsForShapes = (shapes, scene, setSelection, setScene, setColor) => {
           ),
         ),
       ]
+    // | [(s1, CLine(l1)), (_, CCircle(c1))]
+    // | [(s1, CCircle(c1)), (_, CLine(l1))] => [
+    //     (
+    //       "Add points at intersection",
+    //       (
+    //         () => {
+    //           let cross = Calculate.intersection(l1.p1, l1.p2, l2.p1, l2.p2);
+    //           switch (cross) {
+    //           | None => ()
+    //           | Some(cross) =>
+    //             let {sym} = scene.shapes->Belt.Map.String.getExn(s1.id);
+    //             let (scene, id) =
+    //               scene->Api.Point.abs(~sym, cross.x, cross.y);
+    //             setScene(scene);
+    //             setSelection(Some(Points([{id, index: 0}])));
+    //           };
+    //         }
+    //       ),
+    //     ),
+    //   ]
     | [(s1, CLine(l1)), (_, CLine(l2))] => [
         (
           "Add point at intersection",
@@ -80,6 +99,28 @@ let buttonsForShapes = (shapes, scene, setSelection, setScene, setColor) => {
           ),
         ),
       ]
+    // | shapes
+    //     when
+    //       shapes->Belt.List.every(((_, kind)) =>
+    //         switch (kind) {
+    //         | CCircle(_) => false
+    //         | _ => true
+    //         }
+    //       ) => [
+    //     (
+    //       "Fill shape",
+    //       (
+    //         () => {
+    //           let {pos: _, sym} = Belt.Map.String.getExn(scene.points, p1.id);
+    //           let (scene, id) = scene->Api.Shape.poly(~sym, shapes->Belt.List.map(((reference, _)) => {
+    //             let {kind} = scene.shapes->Belt.Map.String.getExn(s1.id);
+    //           }));
+    //           setScene(scene);
+    //           setSelection(Some(Shapes([{id, index: 0}])));
+    //         }
+    //       ),
+    //     ),
+    //   ]
     | _ => []
     }
   );
@@ -135,6 +176,19 @@ let buttonsForPoints = (points, scene, setSelection, setScene) => {
           }
         ),
       ),
+      (
+        "Add perpendicular point",
+        (
+          () => {
+            let {pos: _, sym} = Belt.Map.String.getExn(scene.points, p2.id);
+            // setSelection(None);
+            let (scene, id) =
+              scene->Api.Point.rotate(~sym, p1, p2, Js.Math._PI /. 2.0);
+            setScene(scene);
+            setSelection(Some(Points([{id, index: 0}])));
+          }
+        ),
+      ),
     ]
   | [p1, p2, p3] => [
       (
@@ -145,6 +199,19 @@ let buttonsForPoints = (points, scene, setSelection, setScene) => {
             let (scene, id) = scene->Api.Shape.circlePart(~sym, p3, p2, p1);
             setScene(scene);
             setSelection(Some(Shapes([{id, index: 0}])));
+          }
+        ),
+      ),
+      (
+        "Angle Bisector",
+        (
+          () => {
+            let {pos: _, sym} = Belt.Map.String.getExn(scene.points, p1.id);
+            // setSelection(None);
+            let (scene, id) =
+              scene->Api.Point.rotateBetween(~sym, p1, p2, p3, 0.5);
+            setScene(scene);
+            setSelection(Some(Points([{id, index: 0}])));
           }
         ),
       ),
@@ -201,7 +268,23 @@ let make =
     ) => {
   let buttons = [
     ("Permalink", () => permalink(scene)),
-    ("Clear scene", () => setScene(Api.init())),
+    (
+      "Clear scene",
+      () =>
+        setScene(
+          {
+            let scene = Api.init();
+            let (scene, center) = scene->Api.Point.abs(250., 250.);
+            let (scene, _) =
+              scene->Api.Point.abs(
+                ~sym=Some({center: Api.Ref.id(center), count: 10}),
+                250.,
+                150.,
+              );
+            scene;
+          },
+        ),
+    ),
     ("Toggle points", () => togglePoints()),
     ("Undo", onUndo),
     ...switch (selection) {

@@ -150,6 +150,24 @@ and calculatePoint = (point: point, scene: scene, positions: positions) => {
     | Percent(perc) => {x: p1.x +. dx *. perc, y: p1.y +. dy *. perc}
     // | Abs(v) => x1 +.
     };
+  | RotateBetween({one, middle, two, amount}) =>
+    let one = resolvePoint(one, scene, positions);
+    let middle = resolvePoint(middle, scene, positions);
+    let two = resolvePoint(two, scene, positions);
+    let t1 = angleTo(dpos(middle, one));
+    let t2 = angleTo(dpos(middle, two));
+    rotateAround(one, middle, (t2 -. t1) *. amount);
+
+  | Rotate({source, dest, theta}) =>
+    let p1 = resolvePoint(source, scene, positions);
+    let p2 = resolvePoint(dest, scene, positions);
+    rotateAround(p1, p2, theta);
+  // let dx = p2.x -. p1.x;
+  // let dy = p2.y -. p1.y;
+  // switch (percentOrAbs) {
+  // | Percent(perc) => {x: p1.x +. dx *. perc, y: p1.y +. dy *. perc}
+  // // | Abs(v) => x1 +.
+  // };
   | Circle({center, onEdge, angle, offset}) =>
     let c = resolvePoint(center, scene, positions);
     let p = resolvePoint(onEdge, scene, positions);
@@ -196,6 +214,13 @@ let shape = (shape: shapeKind, scene: scene, positions: positions) =>
     let theta0 = angleTo(dpos(c, onEdge));
     let theta1 = angleTo(dpos(c, goUntil));
     CCirclePart({center: c, r, theta0, theta1});
+  // | Poly(_items) => CCircle({
+  //                      center: {
+  //                        x: 100.0,
+  //                        y: 100.0,
+  //                      },
+  //                      r: 50.,
+  //                    })
   };
 
 let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
@@ -214,6 +239,18 @@ let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
       theta0: theta0 +. theta,
       theta1: theta1 +. theta,
     })
+  // | CPoly({p0, items}) =>
+  //   CPoly({
+  //     p0: rotateAround(p0, center, theta),
+  //     items:
+  //       items->Belt.List.map(item =>
+  //         switch (item) {
+  //         | `Line(pos) => `Line(rotateAround(pos, center, theta))
+  //         | `Arc({to_, r, sweep}) =>
+  //           `Arc({to_: rotateAround(to_, center, theta), r, sweep})
+  //         }
+  //       ),
+  //   })
   };
 };
 

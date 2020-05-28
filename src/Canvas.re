@@ -16,6 +16,30 @@ let s = Js.Float.toString;
 let normalizeTheta = t => t < 0. ? Js.Math._PI *. 2. +. t : t;
 
 module Shape = {
+  // let makePolyPath = (p0, items) => {
+  //   [
+  //     Printf.sprintf("M %0.2f %0.2f", p0.x, p0.y),
+  //     ...items->Belt.List.map(item =>
+  //          switch (item) {
+  //          | `Line(pos) => Printf.sprintf("L %0.2f %0.2f", pos.x, pos.y)
+  //          | `Arc({to_, r, sweep}) =>
+  //            Printf.sprintf(
+  //              {|A %0.2f %0.2f
+  //           0
+  //           %d 1
+  //           %0.2f %0.2f|},
+  //              r,
+  //              r,
+  //              sweep ? 1 : 0,
+  //              to_.x,
+  //              to_.y,
+  //            )
+  //          }
+  //        ),
+  //   ]
+  //   |> String.concat(" ");
+  // };
+
   module Inner = {
     [@react.component]
     let make = (~shape, ~onClick, ~style, ~strokeWidth, ~stroke) => {
@@ -42,6 +66,15 @@ module Shape = {
           style
           stroke
         />
+      // | CPoly({p0, items}) =>
+      //   <path
+      //     d={makePolyPath(p0, items)}
+      //     onClick
+      //     fill="#afa"
+      //     strokeWidth
+      //     style
+      //     stroke
+      //   />
       | CCirclePart({center, r, theta0, theta1}) =>
         let start = {
           x: center.x +. cos(theta0) *. r,
@@ -52,7 +85,6 @@ module Shape = {
           y: center.y +. sin(theta1) *. r,
         };
         <path
-          onClick
           d={Printf.sprintf(
             {|M %0.2f %0.2f
             A %0.2f %0.2f
@@ -67,6 +99,7 @@ module Shape = {
             endd.x,
             endd.y,
           )}
+          onClick
           fill="none"
           strokeWidth
           style
