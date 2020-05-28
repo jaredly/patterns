@@ -11,6 +11,16 @@ open Types;
 //     }
 // }
 
+type transform = {
+  zoom: float,
+  dx: float,
+  dy: float,
+};
+
+let tx = (x, transform) => (x -. transform.dx) *. transform.zoom;
+let ty = (y, transform) => (y -. transform.dy) *. transform.zoom;
+let tf = (f, transform) => f *. transform.zoom;
+
 let s = Js.Float.toString;
 
 let normalizeTheta = t => t < 0. ? Js.Math._PI *. 2. +. t : t;
@@ -42,15 +52,15 @@ module Shape = {
 
   module Inner = {
     [@react.component]
-    let make = (~shape, ~onClick, ~style, ~strokeWidth, ~stroke) => {
+    let make = (~transform, ~shape, ~onClick, ~style, ~strokeWidth, ~stroke) => {
       switch (shape) {
       | CLine({p1, p2}) =>
         <line
           onClick
-          x1={s(p1.x)}
-          y1={s(p1.y)}
-          x2={s(p2.x)}
-          y2={s(p2.y)}
+          x1={s(tx(p1.x, transform))}
+          y1={s(ty(p1.y, transform))}
+          x2={s(tx(p2.x, transform))}
+          y2={s(ty(p2.y, transform))}
           style
           strokeWidth
           stroke
@@ -58,9 +68,9 @@ module Shape = {
       | CCircle({center, r}) =>
         <circle
           onClick
-          cx={s(center.x)}
-          cy={s(center.y)}
-          r={s(r)}
+          cx={s(tx(center.x, transform))}
+          cy={s(ty(center.y, transform))}
+          r={s(tf(r, transform))}
           fill="none"
           strokeWidth
           style
@@ -91,13 +101,13 @@ module Shape = {
             0
             %d 1
             %0.2f %0.2f|},
-            start.x,
-            start.y,
-            r,
-            r,
+            tx(start.x, transform),
+            ty(start.y, transform),
+            tf(r, transform),
+            tf(r, transform),
             normalizeTheta(theta1 -. theta0) > Js.Math._PI ? 1 : 0,
-            endd.x,
-            endd.y,
+            tx(endd.x, transform),
+            ty(endd.y, transform),
           )}
           onClick
           fill="none"
@@ -110,11 +120,12 @@ module Shape = {
   };
 
   [@react.component]
-  let make = (~shape, ~color, ~isSelected, ~onSelect) => {
+  let make = (~transform, ~shape, ~color, ~isSelected, ~onSelect) => {
     <React.Fragment>
 
         <Inner
           shape
+          transform
           onClick={_ => onSelect()}
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
           strokeWidth="4"
@@ -122,6 +133,7 @@ module Shape = {
         />
         <Inner
           shape
+          transform
           onClick={_ => onSelect()}
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
           strokeWidth="1"
@@ -158,6 +170,7 @@ let isSelected = (selection, r) =>
 [@react.component]
 let make =
     (
+      ~transform: transform,
       ~scene: scene,
       ~selection: option(selection),
       ~selectPoint: reference => unit,
@@ -181,6 +194,7 @@ let make =
      ->Belt.Array.map(((k, shape, color)) =>
          <Shape
            color
+           transform
            isSelected={isShapeSelected(selection, k)}
            onSelect={() => selectShape(k)}
            key={toId(k)}
@@ -193,8 +207,8 @@ let make =
          ->Belt.Array.map(((k, {x, y})) => {
              <circle
                key={toId(k)}
-               cx={Js.Float.toString(x)}
-               cy={Js.Float.toString(y)}
+               cx={Js.Float.toString(tx(x, transform))}
+               cy={Js.Float.toString(ty(y, transform))}
                onClick={_ => selectPoint(k)}
                r="2"
                //  fill={k.index == 0 ? "red" : "rgba(0,0,255,0.2)"}

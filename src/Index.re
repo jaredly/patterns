@@ -120,6 +120,7 @@ module App = {
     // let (selection, setSelection) = React.useState(() => None);
     <div>
       <Canvas
+        transform={zoom: 0.5, dx: (-250.), dy: (-250.)}
         showPoints={state.showPoints}
         scene={state.scene}
         selection={state.selection}

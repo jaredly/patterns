@@ -215,6 +215,19 @@ let buttonsForPoints = (points, scene, setSelection, setScene) => {
           }
         ),
       ),
+      (
+        "Mirror across",
+        (
+          () => {
+            let {pos: _, sym} = Belt.Map.String.getExn(scene.points, p1.id);
+            // setSelection(None);
+            let (scene, id) =
+              scene->Api.Point.rotateBetween(~sym, p1, p2, p3, 2.);
+            setScene(scene);
+            setSelection(Some(Points([{id, index: 0}])));
+          }
+        ),
+      ),
     ]
   | _ => []
   };
