@@ -196,10 +196,12 @@ let make =
                cx={Js.Float.toString(x)}
                cy={Js.Float.toString(y)}
                onClick={_ => selectPoint(k)}
-               r="4"
-               fill={k.index == 0 ? "red" : "rgba(0,0,255,0.2)"}
-               stroke="black"
-               strokeWidth={isSelected(selection, k) ? "3" : "0"}
+               r="2"
+               //  fill={k.index == 0 ? "red" : "rgba(0,0,255,0.2)"}
+               fill="rgba(255,255,255,0.2)"
+               stroke="rgba(0,0,0,0.5)"
+               strokeWidth={isSelected(selection, k) ? "3" : "1"}
+               //  strokeWidth={isSelected(selection, k) ? "3" : "0"}
                style={ReactDOMRe.Style.make(~cursor="pointer", ())}
              />
            })
