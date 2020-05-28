@@ -50,12 +50,14 @@ let scene = {
 
 module App = {
   type state = {
+    hover: option([ | `Point(Types.reference) | `Shape(Types.reference)]),
     showPoints: bool,
     scene: Types.scene,
     selection: option(Types.selection),
     history: list(Types.scene),
   };
   let initial = {
+    hover: None,
     showPoints: true,
     scene: Controls.getInitial(scene),
     selection: None,
@@ -64,6 +66,7 @@ module App = {
 
   let reduce = (state, action) => {
     switch (action) {
+    | `SetHover(hover) => {...state, hover}
     | `Undo =>
       switch (state.history) {
       | [] => state
@@ -118,23 +121,33 @@ module App = {
     let (state, dispatch) = React.useReducer(reduce, initial);
     // let (scene, updateScene) = React.useState(() => scene);
     // let (selection, setSelection) = React.useState(() => None);
-    <div>
-      <Canvas
-        transform={zoom: 0.5, dx: (-250.), dy: (-250.)}
-        showPoints={state.showPoints}
+    <div className=Css.(style([display(`flex), flexDirection(`row)]))>
+      <div>
+        <Canvas
+          transform={zoom: 1., dx: (-250.), dy: (-250.)}
+          showPoints={state.showPoints}
+          scene={state.scene}
+          hover={state.hover}
+          selection={state.selection}
+          selectPoint={res => dispatch(`SelectPoint(res))}
+          selectShape={res => dispatch(`SelectShape(res))}
+        />
+        <Controls
+          selection={state.selection}
+          setSelection={s => dispatch(`SetSelection(s))}
+          scene={state.scene}
+          setScene={s => dispatch(`SetScene(s))}
+          togglePoints={() => dispatch(`TogglePoints)}
+          setColor={(s, color) => dispatch(`SetColor((s, color)))}
+          onUndo={() => dispatch(`Undo)}
+        />
+      </div>
+      <Sidebar
         scene={state.scene}
         selection={state.selection}
-        selectPoint={res => dispatch(`SelectPoint(res))}
-        selectShape={res => dispatch(`SelectShape(res))}
-      />
-      <Controls
-        selection={state.selection}
-        setSelection={s => dispatch(`SetSelection(s))}
-        scene={state.scene}
+        setHovered={s => dispatch(`SetHover(s))}
         setScene={s => dispatch(`SetScene(s))}
-        togglePoints={() => dispatch(`TogglePoints)}
-        setColor={(s, color) => dispatch(`SetColor((s, color)))}
-        onUndo={() => dispatch(`Undo)}
+        setSelection={s => dispatch(`SetSelection(s))}
       />
     </div>;
   };

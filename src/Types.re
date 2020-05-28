@@ -278,6 +278,7 @@ type selection =
   | Points(list(reference))
   | Shapes(list(reference));
 
+type hover = [ | `Point(reference) | `Shape(reference)];
 // type selection = {
 //   kind: kindSelection,
 //   sym: symmetrySelection,

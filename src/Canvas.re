@@ -120,7 +120,7 @@ module Shape = {
   };
 
   [@react.component]
-  let make = (~transform, ~shape, ~color, ~isSelected, ~onSelect) => {
+  let make = (~transform, ~isHovered, ~shape, ~color, ~isSelected, ~onSelect) => {
     <React.Fragment>
 
         <Inner
@@ -129,7 +129,9 @@ module Shape = {
           onClick={_ => onSelect()}
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
           strokeWidth="4"
-          stroke={isSelected ? "rgba(0, 255, 0, 0.5)" : "rgba(0,0,0,0)"}
+          stroke={
+            isSelected || isHovered ? "rgba(0, 255, 0, 0.5)" : "rgba(0,0,0,0)"
+          }
         />
         <Inner
           shape
@@ -170,6 +172,7 @@ let isSelected = (selection, r) =>
 [@react.component]
 let make =
     (
+      ~hover: option(hover),
       ~transform: transform,
       ~scene: scene,
       ~selection: option(selection),
@@ -182,7 +185,7 @@ let make =
       () => {Calculate.calculateAllPositions(scene)},
       [|scene|],
     );
-  <svg width="500px" height="500px">
+  <svg width="1000px" height="1000px">
     {shapes
      ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
          switch (a, b) {
@@ -194,6 +197,12 @@ let make =
      ->Belt.Array.map(((k, shape, color)) =>
          <Shape
            color
+           isHovered={
+             switch (hover) {
+             | Some(`Shape({id})) when id == k.id => true
+             | _ => false
+             }
+           }
            transform
            isSelected={isShapeSelected(selection, k)}
            onSelect={() => selectShape(k)}
@@ -214,7 +223,10 @@ let make =
                //  fill={k.index == 0 ? "red" : "rgba(0,0,255,0.2)"}
                fill="rgba(255,255,255,0.2)"
                stroke="rgba(0,0,0,0.5)"
-               strokeWidth={isSelected(selection, k) ? "3" : "1"}
+               strokeWidth={
+                 isSelected(selection, k) || hover == Some(`Point(k))
+                   ? "3" : "1"
+               }
                //  strokeWidth={isSelected(selection, k) ? "3" : "0"}
                style={ReactDOMRe.Style.make(~cursor="pointer", ())}
              />

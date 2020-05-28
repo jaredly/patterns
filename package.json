@@ -1,6 +1,6 @@
 {
     "dependencies": {
-        "bs-css": "^12.2.0",
+        "bs-css-emotion": "^1.2.0",
         "bs-platform": "^7.3.2",
         "parcel": "^1.12.4",
         "react": "^16.13.1",
