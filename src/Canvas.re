@@ -52,11 +52,21 @@ module Shape = {
 
   module Inner = {
     [@react.component]
-    let make = (~transform, ~shape, ~onClick, ~style, ~strokeWidth, ~stroke) => {
+    let make =
+        (
+          ~className,
+          ~transform,
+          ~shape,
+          ~onClick,
+          ~style,
+          ~strokeWidth,
+          ~stroke,
+        ) => {
       switch (shape) {
       | CLine({p1, p2}) =>
         <line
           onClick
+          className
           x1={s(tx(p1.x, transform))}
           y1={s(ty(p1.y, transform))}
           x2={s(tx(p2.x, transform))}
@@ -68,6 +78,7 @@ module Shape = {
       | CCircle({center, r}) =>
         <circle
           onClick
+          className
           cx={s(tx(center.x, transform))}
           cy={s(ty(center.y, transform))}
           r={s(tf(r, transform))}
@@ -80,6 +91,7 @@ module Shape = {
       //   <path
       //     d={makePolyPath(p0, items)}
       //     onClick
+      // className
       //     fill="#afa"
       //     strokeWidth
       //     style
@@ -95,6 +107,7 @@ module Shape = {
           y: center.y +. sin(theta1) *. r,
         };
         <path
+          className
           d={Printf.sprintf(
             {|M %0.2f %0.2f
             A %0.2f %0.2f
@@ -126,17 +139,27 @@ module Shape = {
         <Inner
           shape
           transform
+          className=Css.(
+            isSelected
+              ? ""
+              : style([
+                  hover([unsafe("stroke", "rgba(100, 220, 255, 0.5)")]),
+                ])
+          )
           onClick={_ => onSelect()}
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
           strokeWidth="4"
           stroke={
-            isSelected || isHovered ? "rgba(0, 255, 0, 0.5)" : "rgba(0,0,0,0)"
+            isSelected
+              ? "rgba(0, 255, 0, 0.5)"
+              : isHovered ? "rgba(100, 220, 255, 0.25)" : "rgba(0,0,0,0)"
           }
         />
         <Inner
           shape
           transform
-          onClick={_ => onSelect()}
+          onClick={_ => ()}
+          className=Css.(style([pointerEvents(`none)]))
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
           strokeWidth="1"
           stroke={
@@ -160,6 +183,12 @@ let toId = ({id, index}) => id ++ "_" ++ string_of_int(index);
 let isShapeSelected = (selection, r) =>
   switch (selection) {
   | Some(Shapes(shapes)) => shapes->Belt.List.has(r, (==))
+  | _ => false
+  };
+
+let isShapeHovered = (selection, r) =>
+  switch (selection) {
+  | Some(Shapes(shapes)) => shapes->Belt.List.some(s => s.id == r.id)
   | _ => false
   };
 
@@ -198,10 +227,13 @@ let make =
          <Shape
            color
            isHovered={
-             switch (hover) {
-             | Some(`Shape({id})) when id == k.id => true
-             | _ => false
-             }
+             (
+               switch (hover) {
+               | Some(`Shape({id})) when id == k.id => true
+               | _ => false
+               }
+             )
+             || isShapeHovered(selection, k)
            }
            transform
            isSelected={isShapeSelected(selection, k)}

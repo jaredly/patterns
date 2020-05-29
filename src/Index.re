@@ -48,6 +48,8 @@ let scene = {
   scene;
 };
 
+let useState = initial => React.useReducer((_, a) => a, initial);
+
 module App = {
   type state = {
     hover: option([ | `Point(Types.reference) | `Shape(Types.reference)]),
@@ -118,13 +120,15 @@ module App = {
 
   [@react.component]
   let make = () => {
+    let (transform, setTransform) =
+      useState({Canvas.zoom: 2., dx: 0., dy: 0.});
     let (state, dispatch) = React.useReducer(reduce, initial);
     // let (scene, updateScene) = React.useState(() => scene);
     // let (selection, setSelection) = React.useState(() => None);
     <div className=Css.(style([display(`flex), flexDirection(`row)]))>
       <div>
         <Canvas
-          transform={zoom: 1., dx: (-250.), dy: (-250.)}
+          transform
           showPoints={state.showPoints}
           scene={state.scene}
           hover={state.hover}
@@ -142,13 +146,39 @@ module App = {
           onUndo={() => dispatch(`Undo)}
         />
       </div>
-      <Sidebar
-        scene={state.scene}
-        selection={state.selection}
-        setHovered={s => dispatch(`SetHover(s))}
-        setScene={s => dispatch(`SetScene(s))}
-        setSelection={s => dispatch(`SetSelection(s))}
-      />
+      <div>
+        {React.string("Zoom")}
+        <input
+          value={transform.zoom->Js.Float.toString}
+          onChange={evt => {
+            let zoom = evt->ReactEvent.Form.target##value->Js.Float.fromString;
+            setTransform({...transform, zoom});
+          }}
+        />
+        {React.string("dx")}
+        <input
+          value={transform.dx->Js.Float.toString}
+          onChange={evt => {
+            let dx = evt->ReactEvent.Form.target##value->Js.Float.fromString;
+            setTransform({...transform, dx});
+          }}
+        />
+        {React.string("dy")}
+        <input
+          value={transform.dy->Js.Float.toString}
+          onChange={evt => {
+            let dy = evt->ReactEvent.Form.target##value->Js.Float.fromString;
+            setTransform({...transform, dy});
+          }}
+        />
+        <Sidebar
+          scene={state.scene}
+          selection={state.selection}
+          setHovered={s => dispatch(`SetHover(s))}
+          setScene={s => dispatch(`SetScene(s))}
+          setSelection={s => dispatch(`SetSelection(s))}
+        />
+      </div>
     </div>;
   };
 };
