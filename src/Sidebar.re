@@ -24,6 +24,7 @@ module Tiles = {
                />
              </div>
              <div>
+               {React.string("Margin: ")}
                <input
                  value={tile.margin->Js.Float.toString}
                  onChange={evt => {
@@ -34,6 +35,21 @@ module Tiles = {
                      tiles:
                        scene.tiles
                        ->Belt.Map.String.set(k, {...tile, margin}),
+                   });
+                 }}
+               />
+             </div>
+             <div>
+               {React.string("Order: ")}
+               <input
+                 value={tile.order->Js.Float.toString}
+                 onChange={evt => {
+                   let order =
+                     evt->ReactEvent.Form.target##value->Js.Float.fromString;
+                   setScene({
+                     ...scene,
+                     tiles:
+                       scene.tiles->Belt.Map.String.set(k, {...tile, order}),
                    });
                  }}
                />
@@ -70,7 +86,15 @@ module Tiles = {
 
 module Shapes = {
   [@react.component]
-  let make = (~scene, ~selection, ~setSelection, ~setHovered, ~setScene) => {
+  let make =
+      (
+        ~scene,
+        ~selection,
+        ~selectShape,
+        ~setSelection,
+        ~setHovered,
+        ~setScene,
+      ) => {
     <React.Fragment>
       {scene.shapes
        ->S.toArray
@@ -86,12 +110,12 @@ module Shapes = {
              onMouseOut={_ => setHovered(None)}>
              <div
                onClick={_ =>
-                 if (isSelected) {
-                   setSelection(None);
-                 } else {
-                   setSelection(Some(Shapes([{id: k, index: 0}])));
-                 }
-               }
+                 //  if (isSelected) {
+                 //    setSelection(None);
+                 //  } else {
+                 //    setSelection(Some(Shapes([{id: k, index: 0}])));
+                 //  }
+                 selectShape({id: k, index: 0})}
                style={ReactDOMRe.Style.make(
                  ~borderColor=
                    switch (shape.color) {
@@ -186,13 +210,22 @@ module Shapes = {
 };
 
 [@react.component]
-let make = (~scene, ~selection, ~setScene, ~setSelection, ~setHovered) => {
+let make =
+    (
+      ~scene,
+      ~selection,
+      ~selectPoint,
+      ~selectShape,
+      ~setScene,
+      ~setSelection,
+      ~setHovered,
+    ) => {
   <div>
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
       {React.string("Shapes")}
     </div>
-    <Shapes scene selection setScene setSelection setHovered />
+    <Shapes scene selection selectShape setScene setSelection setHovered />
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
       {React.string("Tiles")}

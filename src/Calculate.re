@@ -111,8 +111,16 @@ let intersectCircles = (ac, ar, bc, br) => {
 
 let intersection = (ap1, ap2, bp1, bp2) => {
   let (m1, b1) = generic(ap1, ap2);
+  let av = ap1.x == ap2.x;
   let (m2, b2) = generic(bp1, bp2);
-  if (m1 == m2) {
+  let bv = bp1.x == bp2.x;
+  if (av && bv) {
+    None;
+  } else if (av) {
+    Some({x: ap1.x, y: ap1.x *. m2 +. b2});
+  } else if (bv) {
+    Some({x: bp1.x, y: bp1.x *. m1 +. b1});
+  } else if (m1 == m2) {
     None;
   } else {
     let x = (b2 -. b1) /. (m1 -. m2);
@@ -436,8 +444,60 @@ let getWind = ordered => {
   //       (sum +. insideAngle(theta -. prev), i + 1);
   //     },
   //   );
-  Js.log2("Total Wind", totalWind);
+  // Js.log2("Total Wind", totalWind);
   totalWind;
+};
+
+// let lineCollide = (ap1, ap2, bp1, bp2) => {
+
+// }
+
+let collideEndToEnd = (prev, next) => {
+  switch (prev, next) {
+  | (CLine(l1), CLine(l2)) => intersection(l1.p1, l1.p2, l2.p1, l2.p2)
+  | _ => None
+  };
+};
+
+let (|?) = (a, b) =>
+  switch (a) {
+  | None => b
+  | Some(a) => a
+  };
+
+let joinAdjacentLineSegments = ordered => {
+  // let res = [||]
+  let last = ref(None);
+  let (_, items) =
+    ordered->Belt.Array.reduce((None, []), ((last, items), shape) => {
+      switch (shape) {
+      | CLine({p1, p2}) => (
+          Some((p1, p2)),
+          switch (last) {
+          | None => [shape, ...items]
+          | Some((pr1, pr2)) =>
+            let t1 = angleTo(dpos(pr1, pr2));
+            let t2 = angleTo(dpos(p1, p2));
+            if (t1 == t2) {
+              switch (items) {
+              | [_one, ...rest] => [CLine({p1: pr1, p2}), ...rest]
+              | _ => [shape, ...items]
+              };
+            } else {
+              [shape, ...items];
+            };
+          },
+        )
+      | _ => (None, [shape, ...items])
+      // let next = switch shape {
+      //   | CLine({p1, p2}) => Some((p1, p2))
+      //   | _ => None
+      // }
+      }
+    });
+  items->List.rev->Belt.List.toArray;
+  // ordered->Belt.Array.forEach(shape => {
+  // })
 };
 
 let inset = (ordered, margin) => {
@@ -451,7 +511,11 @@ let inset = (ordered, margin) => {
     ordered->Belt.Array.map(shape =>
       switch (shape) {
       | CLine({p1, p2}) =>
-        let theta = angleTo(dpos(p1, p2)) +. Js.Math._PI /. 2.;
+        let theta =
+          angleTo(dpos(p1, p2))
+          +. Js.Math._PI
+          /. 2.
+          *. (clockwise ? 1. : (-1.));
         CLine({
           p1: push(p1, ~theta, ~mag=margin),
           p2: push(p2, ~theta, ~mag=margin),
@@ -459,6 +523,15 @@ let inset = (ordered, margin) => {
       | x => x
       }
     );
+  let clipped =
+    pushed->Belt.Array.mapWithIndex((i, shape) => {
+      let prev = collideEndToEnd(pushed[i == 0 ? ln - 1 : i - 1], shape);
+      let next = collideEndToEnd(shape, pushed[i == ln - 1 ? 0 : i + 1]);
+      switch (shape) {
+      | CLine({p1, p2}) => CLine({p1: prev |? p1, p2: next |? p2})
+      | x => x
+      };
+    });
   // Js.log("reversed");
   // getWind(ordered->Belt.Array.reverse);
   // ok, gotta find out the winding direction.
@@ -471,5 +544,6 @@ let inset = (ordered, margin) => {
 
   // })
   // ordered;
-  pushed;
+  // pushed;
+  clipped;
 };

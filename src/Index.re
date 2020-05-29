@@ -54,6 +54,7 @@ module App = {
   type state = {
     hover: option([ | `Point(Types.reference) | `Shape(Types.reference)]),
     showPoints: bool,
+    showTraces: bool,
     scene: Types.scene,
     selection: option(Types.selection),
     history: list(Types.scene),
@@ -61,6 +62,7 @@ module App = {
   let initial = {
     hover: None,
     showPoints: true,
+    showTraces: true,
     scene: Controls.getInitial(scene),
     selection: None,
     history: [],
@@ -75,6 +77,7 @@ module App = {
       | [scene, ...history] => {...state, scene, history, selection: None}
       }
     | `TogglePoints => {...state, showPoints: !state.showPoints}
+    | `ToggleTraces => {...state, showTraces: !state.showTraces}
     | `SelectShape(reference) => {
         ...state,
         selection:
@@ -130,6 +133,7 @@ module App = {
         <Canvas
           transform
           showPoints={state.showPoints}
+          showTraces={state.showTraces}
           scene={state.scene}
           hover={state.hover}
           selection={state.selection}
@@ -142,6 +146,7 @@ module App = {
           scene={state.scene}
           setScene={s => dispatch(`SetScene(s))}
           togglePoints={() => dispatch(`TogglePoints)}
+          toggleTraces={() => dispatch(`ToggleTraces)}
           setColor={(s, color) => dispatch(`SetColor((s, color)))}
           onUndo={() => dispatch(`Undo)}
         />
@@ -174,6 +179,8 @@ module App = {
         <Sidebar
           scene={state.scene}
           selection={state.selection}
+          selectPoint={res => dispatch(`SelectPoint(res))}
+          selectShape={res => dispatch(`SelectShape(res))}
           setHovered={s => dispatch(`SetHover(s))}
           setScene={s => dispatch(`SetScene(s))}
           setSelection={s => dispatch(`SetSelection(s))}

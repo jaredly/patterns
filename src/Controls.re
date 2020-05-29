@@ -304,6 +304,7 @@ let make =
       ~setScene,
       ~onUndo,
       ~togglePoints,
+      ~toggleTraces,
       ~setColor,
     ) => {
   let buttons = [
@@ -326,6 +327,7 @@ let make =
         ),
     ),
     ("Toggle points", () => togglePoints()),
+    ("Toggle traces", () => toggleTraces()),
     ("Undo", onUndo),
     ...switch (selection) {
        | None => []

@@ -89,6 +89,8 @@ let polyPath = (transform, items, margin) => {
   ordered->Js.Array2.push(first)->ignore;
   loop(endp);
 
+  let ordered = Calculate.joinAdjacentLineSegments(ordered);
+
   let ordered = margin == 0. ? ordered : Calculate.inset(ordered, margin);
 
   // Js.log2("Ordered", ordered);
@@ -353,6 +355,8 @@ let isSelected = (selection, r) =>
   | _ => false
   };
 
+let cmp = (a, b) => a < b ? (-1) : a > b ? 1 : 0;
+
 [@react.component]
 let make =
     (
@@ -363,6 +367,7 @@ let make =
       ~selectPoint: reference => unit,
       ~selectShape: reference => unit,
       ~showPoints,
+      ~showTraces,
     ) => {
   let (_positions, points, shapes, tiles) =
     React.useMemo1(
@@ -373,6 +378,9 @@ let make =
     // {tiles->Js.Array2.sortInPlaceWith}
 
       {tiles
+       ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
+           cmp(a.order, b.order)
+         )
        ->Belt.Array.map(((k, sides, {color, margin})) => {
            <path
              key={toId(k)}
@@ -381,7 +389,10 @@ let make =
            />
          })
        ->React.array}
-      {shapes
+      {(
+         showTraces
+           ? shapes : shapes->Belt.Array.keep(((_, _, c)) => c != None)
+       )
        ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
            switch (a, b) {
            | (None, Some(_)) => (-1)
