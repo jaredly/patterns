@@ -156,7 +156,14 @@ and calculatePoint = (point: point, scene: scene, positions: positions) => {
     let two = resolvePoint(two, scene, positions);
     let t1 = angleTo(dpos(middle, one));
     let t2 = angleTo(dpos(middle, two));
-    rotateAround(one, middle, (t2 -. t1) *. amount);
+    let diff = t2 -. t1;
+    let diff =
+      if (abs_float(diff) > Js.Math._PI) {
+        -. (Js.Math._PI *. 2. -. diff);
+      } else {
+        diff;
+      };
+    rotateAround(one, middle, diff *. amount);
 
   | Rotate({source, dest, theta}) =>
     let p1 = resolvePoint(source, scene, positions);

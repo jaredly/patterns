@@ -8,7 +8,8 @@
         "reason-react": "^0.8.0"
     },
     "scripts": {
-        "build": "bsb -make-world"
+        "build": "bsb -make-world",
+        "start": "parcel index.html"
     },
     "devDependencies": {
         "bsb-js": "^1.1.7"
