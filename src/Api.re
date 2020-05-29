@@ -7,6 +7,7 @@ let init = () => {
   points: empty,
   // symmetries: empty,
   shapes: empty,
+  tiles: empty,
   // shapeSymmetries: empty,
 };
 
@@ -56,6 +57,14 @@ module Point = {
   //     id,
   //   );
   // };
+};
+
+module Tile = {
+  let add = (scene, ~sym, sides) => {
+    let id = genId();
+    let tile = {sides, sym, color: "blue", margin: 0., order: 0.};
+    ({...scene, tiles: scene.tiles->S.set(id, tile)}, id);
+  };
 };
 
 module Shape = {

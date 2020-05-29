@@ -15,13 +15,35 @@ let buttonsForShapes = (shapes, scene, setSelection, setScene, setColor) => {
         ("Fade", () => setColors(setColor, shapes, None)),
       ];
   let positions = Hashtbl.create(10);
+  let resolved =
+    shapes->Belt.List.map(r => {
+      (r, Calculate.resolveShape(scene, r, positions))
+    });
   colors
   @ (
-    switch (
-      shapes->Belt.List.map(r => {
-        (r, Calculate.resolveShape(scene, r, positions))
-      })
-    ) {
+    List.length(shapes) > 2
+    && resolved->Belt.List.every(((r, shape)) =>
+         switch (shape) {
+         | CCircle(_) => false
+         | _ => true
+         }
+       )
+      ? [
+        (
+          "Add tile",
+          () => {
+            let r = List.hd(shapes);
+            let {kind: _, sym} = scene.shapes->Belt.Map.String.getExn(r.id);
+            let (scene, id) = scene->Api.Tile.add(~sym, shapes);
+            setScene(scene);
+            setSelection(None);
+          },
+        ),
+      ]
+      : []
+  )
+  @ (
+    switch (resolved) {
     | [] => []
     | [(s, _)] => [
         (
@@ -262,7 +284,12 @@ let getInitial = default => {
       Serialize.unserializeAnyFromJsonUnsafe(
         Js.String2.sliceToEnd(current, ~from=1)->Js.Json.parseExn,
       );
-    data;
+    // Hacky data migration!
+    if (Obj.magic(data.tiles) === None) {
+      {...data, tiles: Api.empty};
+    } else {
+      data;
+    };
   } else {
     default;
   };
@@ -307,6 +334,7 @@ let make =
            ...switch (selection) {
               | Points(items) =>
                 buttonsForPoints(items, scene, setSelection, setScene)
+              | Tiles(tiles) => []
               | Shapes(shapes) =>
                 buttonsForShapes(
                   shapes,

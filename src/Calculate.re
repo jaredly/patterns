@@ -24,6 +24,37 @@ let rotateAround = (point, center, theta) => {
     y: center.y +. sin(theta +. angle) *. mag,
   };
 };
+
+let flip = shape =>
+  switch (shape) {
+  | CLine({p1, p2}) => CLine({p1: p2, p2: p1})
+  | CCircle(_) => shape
+  | CCirclePart({center, r, theta0, theta1}) =>
+    CCirclePart({
+      center,
+      r,
+      // TODO verify this...
+      theta0: theta1 -. Js.Math._PI *. 2.,
+      theta1: theta0,
+    })
+  };
+
+let endPoints = shape =>
+  switch (shape) {
+  | CLine({p1, p2}) => (p1, p2)
+  | CCirclePart({center, r, theta0, theta1}) =>
+    let start = {
+      x: center.x +. cos(theta0) *. r,
+      y: center.y +. sin(theta0) *. r,
+    };
+    let endd = {
+      x: center.x +. cos(theta1) *. r,
+      y: center.y +. sin(theta1) *. r,
+    };
+    (start, endd);
+  | CCircle(_) => ({x: 0., y: 0.}, {x: 0., y: 0.})
+  };
+
 /*
 
  y = mx + b
@@ -102,26 +133,6 @@ let rec resolvePoint = (id: reference, scene: scene, positions: positions) => {
       rotateAround(base, center, around);
     };
   };
-  // switch (id) {
-  // | Actual(id) => getOrCalculatePoint(id, scene, positions)
-  // | Virtual({symmetry, index}) =>
-  //   switch (Belt.Map.String.get(scene.symmetries, symmetry)) {
-  //   | None => raise(Not_found)
-  //   | Some({center, point, count}) =>
-  //     let center = resolvePoint(center, scene, positions);
-  //     // let point = resolvePoint(point, scene, positions);
-  //     let point = getOrCalculatePoint(point, scene, positions);
-  //     let delta = dpos(center, point);
-  //     let mag = dist(delta);
-  //     let theta = angleTo(delta);
-  //     let around =
-  //       Js.Math._PI *. 2. /. float_of_int(count) *. float_of_int(index);
-  //     {
-  //       x: center.x +. cos(theta +. around) *. mag,
-  //       y: center.y +. sin(theta +. around) *. mag,
-  //     };
-  //   }
-  // };
 }
 
 and getOrCalculatePoint = (id: string, scene: scene, positions: positions) => {
@@ -169,12 +180,6 @@ and calculatePoint = (point: point, scene: scene, positions: positions) => {
     let p1 = resolvePoint(source, scene, positions);
     let p2 = resolvePoint(dest, scene, positions);
     rotateAround(p1, p2, theta);
-  // let dx = p2.x -. p1.x;
-  // let dy = p2.y -. p1.y;
-  // switch (percentOrAbs) {
-  // | Percent(perc) => {x: p1.x +. dx *. perc, y: p1.y +. dy *. perc}
-  // // | Abs(v) => x1 +.
-  // };
   | Circle({center, onEdge, angle, offset}) =>
     let c = resolvePoint(center, scene, positions);
     let p = resolvePoint(onEdge, scene, positions);
@@ -280,6 +285,41 @@ let resolveShape = (scene, ref, positions) => {
   };
 };
 
+let tile = (sides, scene, positions) => {
+  sides->Belt.List.map(r => resolveShape(scene, r, positions));
+};
+
+let calculateTiles = (scene, positions) => {
+  scene.tiles
+  ->S.toArray
+  ->Belt.Array.map(((k, t)) => {
+      let base = tile(t.sides, scene, positions);
+      switch (t.sym) {
+      | None => [|({id: k, index: 0}, base, t)|]
+      | Some(sym) =>
+        let res = [|({id: k, index: 0}, base, t)|];
+        let by = Js.Math._PI *. 2. /. float_of_int(sym.count);
+        for (x in 1 to sym.count - 1) {
+          res
+          ->Js.Array2.push((
+              {id: k, index: x},
+              base->Belt.List.map(one =>
+                rotateShape(
+                  one,
+                  resolvePoint(sym.center, scene, positions),
+                  by *. float_of_int(x),
+                )
+              ),
+              t,
+            ))
+          ->ignore;
+        };
+        res;
+      };
+    })
+  ->Belt.Array.concatMany;
+};
+
 let calculateShapes = (scene, positions) => {
   scene.shapes
   ->S.toArray
@@ -308,31 +348,6 @@ let calculateShapes = (scene, positions) => {
       };
     })
   ->Belt.Array.concatMany;
-  // let shapesMap = scene.shapes->S.map(s => shape(s, scene, positions));
-  // let syms =
-  //   scene.shapeSymmetries
-  //   ->S.toArray
-  //   ->Belt.Array.map(((k, sym)) => {
-  //       let shape = shapesMap->S.getExn(sym.shape);
-  //       let res = [||];
-  //       let by = Js.Math._PI *. 2. /. float_of_int(sym.count);
-  //       for (x in 1 to sym.count - 1) {
-  //         res
-  //         ->Js.Array2.push((
-  //             (k, x),
-  //             rotateShape(
-  //               shape,
-  //               resolvePoint(sym.center, scene, positions),
-  //               by *. float_of_int(x),
-  //               // 0.,
-  //             ),
-  //           ))
-  //         ->ignore;
-  //       };
-  //       res;
-  //     })
-  //   ->Belt.Array.concatMany;
-  // (shapesMap->S.toArray, syms);
 };
 
 // Hmm this should include symmetry positions too I guess.
@@ -360,7 +375,7 @@ let calculateAllPositions = scene => {
       })
     ->Belt.Array.concatMany;
   let shapes = calculateShapes(scene, positions);
-  (positions, points, shapes);
+  (positions, points, shapes, calculateTiles(scene, positions));
 };
 
 /**  ok */;

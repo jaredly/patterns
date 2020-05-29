@@ -1,6 +1,20 @@
 open Types;
 module S = Belt.Map.String;
 
+module Tiles = {
+  [@react.component]
+  let make = (~scene, ~selection, ~setSelection, ~setHovered, ~setScene) => {
+    <React.Fragment>
+      {scene.tiles
+       ->S.toArray
+       ->Belt.Array.map(((k, shape)) => {
+           <div> {React.string("Tile")} </div>
+         })
+       ->React.array}
+    </React.Fragment>;
+  };
+};
+
 module Shapes = {
   [@react.component]
   let make = (~scene, ~selection, ~setSelection, ~setHovered, ~setScene) => {
@@ -126,5 +140,10 @@ let make = (~scene, ~selection, ~setScene, ~setSelection, ~setHovered) => {
       {React.string("Shapes")}
     </div>
     <Shapes scene selection setScene setSelection setHovered />
+    <div
+      className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
+      {React.string("Tiles")}
+    </div>
+    <Tiles scene selection setScene setSelection setHovered />
   </div>;
 };

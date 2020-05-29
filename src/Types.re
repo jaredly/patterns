@@ -276,13 +276,22 @@ type shapeKind =
 
 type selection =
   | Points(list(reference))
-  | Shapes(list(reference));
+  | Shapes(list(reference))
+  | Tiles(list(reference));
 
 type hover = [ | `Point(reference) | `Shape(reference)];
 // type selection = {
 //   kind: kindSelection,
 //   sym: symmetrySelection,
 // };
+
+type tile = {
+  color: string,
+  margin: float,
+  order: float,
+  sides: list(reference),
+  sym: option(symm),
+};
 
 type point = {
   pos: pointPos,
@@ -298,11 +307,11 @@ type points = Belt.Map.String.t(point);
 // type symmetries = Belt.Map.String.t(symm);
 type positions = Hashtbl.t(string, pos);
 type shapes = Belt.Map.String.t(shape);
+type tiles = Belt.Map.String.t(tile);
 // type shapeSymmetries = Belt.Map.String.t(shapeSymm);
 
 type scene = {
   points,
-  // symmetries,
   shapes,
-  // shapeSymmetries,
+  tiles,
 };
