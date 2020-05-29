@@ -48,7 +48,7 @@ let findMap = (arr, fn) => {
   loop(0);
 };
 
-let polyPath = (transform, items) => {
+let polyPath = (transform, items, margin) => {
   // Js.log2("Poly Path", Belt.List.toArray(items));
 
   // how to sort things?
@@ -68,14 +68,9 @@ let polyPath = (transform, items) => {
         pool->findMap(shape => {
           let (astartp, aendp) = Calculate.endPoints(shape);
           if (almostEqual(astartp, endp)) {
-            // Js.log2("found", shape);
             Some((shape, aendp));
           } else if (almostEqual(aendp, endp)) {
-            // Js.log2("Flipping", shape);
-            Some((
-              Calculate.flip(shape),
-              astartp,
-            ));
+            Some((Calculate.flip(shape), astartp));
           } else {
             None;
           };
@@ -93,6 +88,8 @@ let polyPath = (transform, items) => {
   let (_, endp) = Calculate.endPoints(first);
   ordered->Js.Array2.push(first)->ignore;
   loop(endp);
+
+  let ordered = margin == 0. ? ordered : Calculate.inset(ordered, margin);
 
   // Js.log2("Ordered", ordered);
 
@@ -377,7 +374,11 @@ let make =
 
       {tiles
        ->Belt.Array.map(((k, sides, {color, margin})) => {
-           <path key={toId(k)} fill=color d={polyPath(transform, sides)} />
+           <path
+             key={toId(k)}
+             fill=color
+             d={polyPath(transform, sides, margin)}
+           />
          })
        ->React.array}
       {shapes

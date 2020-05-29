@@ -25,6 +25,11 @@ let rotateAround = (point, center, theta) => {
   };
 };
 
+let push = ({x, y}, ~theta, ~mag) => {
+  x: x +. cos(theta) *. mag,
+  y: y +. sin(theta) *. mag,
+};
+
 let flip = shape =>
   switch (shape) {
   | CLine({p1, p2}) => CLine({p1: p2, p2: p1})
@@ -327,6 +332,7 @@ let calculateShapes = (scene, positions) => {
       let one = shape(kind, scene, positions);
       switch (sym) {
       | None => [|({id: k, index: 0}, one, color)|]
+
       | Some(sym) =>
         let res = [|({id: k, index: 0}, one, color)|];
         let by = Js.Math._PI *. 2. /. float_of_int(sym.count);
@@ -392,4 +398,78 @@ let calculateAllPositions = scene => {
 //   let r = dist(dpos((cx, cy), onEdge));
 //   (cx, cy, r);
 // };
-/* ok */
+
+let toDegrees = rads => rads /. Js.Math._PI *. 180.;
+let insideAngle = angle =>
+  if (angle > Js.Math._PI) {
+    angle -. Js.Math._PI *. 2.;
+  } else if (angle < -. Js.Math._PI) {
+    angle +. Js.Math._PI *. 2.;
+  } else {
+    angle;
+  };
+
+let getWind = ordered => {
+  let ln = Array.length(ordered);
+  let angles =
+    ordered->Belt.Array.map(shape => {
+      let (p1, p2) = endPoints(shape);
+      angleTo(dpos(p1, p2));
+    });
+  // Js.log2("angles", angles->Belt.Array.map(toDegrees));
+  let diffs =
+    angles->Belt.Array.mapWithIndex((i, angle) => {
+      let prev = angles[i == 0 ? ln - 1 : i - 1];
+      insideAngle(angle -. prev);
+    });
+  // Js.log2("diffs", diffs->Belt.Array.map(toDegrees));
+  // Js.log2(
+  //   "diff2",
+  //   diffs->Belt.Array.map(insideAngle)->Belt.Array.map(toDegrees),
+  // );
+  let totalWind = diffs->Belt.Array.reduce(0., (+.));
+  // let (totalWind, _) =
+  //   angles->Belt.Array.reduce(
+  //     (0., 0),
+  //     ((sum, i), theta) => {
+  //       let prev = angles[i == 0 ? ln - 1 : i - 1];
+  //       (sum +. insideAngle(theta -. prev), i + 1);
+  //     },
+  //   );
+  Js.log2("Total Wind", totalWind);
+  totalWind;
+};
+
+let inset = (ordered, margin) => {
+  let ln = Array.length(ordered);
+  // if we're clockwise, each line wants get pushed to
+  // the right (if it's going up)
+  // so, theta +. pi /. 2.
+  /// Otherwise, push it theta -. pi /. 2.
+  let clockwise = getWind(ordered) > 0.;
+  let pushed =
+    ordered->Belt.Array.map(shape =>
+      switch (shape) {
+      | CLine({p1, p2}) =>
+        let theta = angleTo(dpos(p1, p2)) +. Js.Math._PI /. 2.;
+        CLine({
+          p1: push(p1, ~theta, ~mag=margin),
+          p2: push(p2, ~theta, ~mag=margin),
+        });
+      | x => x
+      }
+    );
+  // Js.log("reversed");
+  // getWind(ordered->Belt.Array.reverse);
+  // ok, gotta find out the winding direction.
+  // like, are we going clockwise or counter-clockwise.
+  // I think we can track the "curvature" (sum of diff between angles)
+  // and it should add up to one or the other?
+  // Belt.Array.mapWithIndex((i, shape) => {
+  //   let prev = ordered[i == 0 ? ln - 1 : i - 1];
+  //   let next = ordered[i == ln - 1 ? 0 : i + 1];
+
+  // })
+  // ordered;
+  pushed;
+};

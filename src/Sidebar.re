@@ -23,6 +23,44 @@ module Tiles = {
                  }}
                />
              </div>
+             <div>
+               <input
+                 value={tile.margin->Js.Float.toString}
+                 onChange={evt => {
+                   let margin =
+                     evt->ReactEvent.Form.target##value->Js.Float.fromString;
+                   setScene({
+                     ...scene,
+                     tiles:
+                       scene.tiles
+                       ->Belt.Map.String.set(k, {...tile, margin}),
+                   });
+                 }}
+               />
+             </div>
+             <div>
+               {React.string("Symmetry: ")}
+               {switch (tile.sym) {
+                | None => React.null
+                | Some(sym) =>
+                  <input
+                    value={string_of_int(sym.count)}
+                    onChange={evt => {
+                      let value = evt->ReactEvent.Form.target##value;
+                      let count = int_of_string(value);
+                      setScene({
+                        ...scene,
+                        tiles:
+                          scene.tiles
+                          ->Belt.Map.String.set(
+                              k,
+                              {...tile, sym: Some({...sym, count})},
+                            ),
+                      });
+                    }}
+                  />
+                }}
+             </div>
            </div>
          })
        ->React.array}
