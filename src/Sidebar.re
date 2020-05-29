@@ -7,8 +7,23 @@ module Tiles = {
     <React.Fragment>
       {scene.tiles
        ->S.toArray
-       ->Belt.Array.map(((k, shape)) => {
-           <div> {React.string("Tile")} </div>
+       ->Belt.Array.map(((k, tile)) => {
+           <div>
+             <div> {React.string("Tile")} </div>
+             <div>
+               <input
+                 value={tile.color}
+                 onChange={evt => {
+                   let color = evt->ReactEvent.Form.target##value;
+                   setScene({
+                     ...scene,
+                     tiles:
+                       scene.tiles->Belt.Map.String.set(k, {...tile, color}),
+                   });
+                 }}
+               />
+             </div>
+           </div>
          })
        ->React.array}
     </React.Fragment>;
