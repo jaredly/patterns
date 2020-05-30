@@ -129,6 +129,57 @@ let intersection = (ap1, ap2, bp1, bp2) => {
   };
 };
 
+let pi = Js.Math._PI;
+let pi2 = pi /. 2.;
+let tau = pi *. 2.;
+
+let force = x =>
+  switch (x) {
+  | None => failwith("unwrapped empty")
+  | Some(x) => x
+  };
+
+let lineCircle = (center, r, p1, p2) => {
+  let angle = angleTo(dpos(p1, p2));
+  let closestPoint =
+    intersection(p1, p2, center, push(center, ~theta=angle +. pi2, ~mag=5.))
+    ->force;
+
+  let dist = dist(dpos(closestPoint, center));
+  if (dist > r) {
+    [];
+  } else if (abs_float(dist -. r) < 0.001) {
+    [closestPoint];
+  } else {
+    let otherSide = sqrt(r *. r -. dist *. dist);
+    [
+      push(closestPoint, ~theta=angle, ~mag=otherSide),
+      push(closestPoint, ~theta=angle, ~mag=-. otherSide),
+    ];
+  };
+  // TODO vertical line tho
+  // let (m, b) = generic(p1, p2);
+  // double r, a, b, c; // given as input
+  // double x0 = -a*c/(a*a+b*b), y0 = -b*c/(a*a+b*b);
+  // if (c*c > r*r*(a*a+b*b)+EPS)
+  //     puts ("no points");
+  // else if (abs (c*c - r*r*(a*a+b*b)) < EPS) {
+  //     puts ("1 point");
+  //     cout << x0 << ' ' << y0 << '\n';
+  // }
+  // else {
+  //     double d = r*r - c*c/(a*a+b*b);
+  //     double mult = sqrt (d / (a*a+b*b));
+  //     double ax, ay, bx, by;
+  //     ax = x0 + b * mult;
+  //     bx = x0 - b * mult;
+  //     ay = y0 - a * mult;
+  //     by = y0 + a * mult;
+  //     puts ("2 points");
+  //     cout << ax << ' ' << ay << '\n' << bx << ' ' << by << '\n';
+  // }
+};
+
 // TODO this could infinite loop
 // Need to check for that.
 let rec resolvePoint = (id: reference, scene: scene, positions: positions) => {

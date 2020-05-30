@@ -1,6 +1,53 @@
 open Types;
 module S = Belt.Map.String;
 
+module ColorPicker = {
+  let rawColors = "fbb4aeb3cde3ccebc5decbe4fed9a6ffffcce5d8bdfddaecf2f2f2";
+  let rec loop = raw =>
+    if (raw == "") {
+      [];
+    } else {
+      let chunk = Js.String.slice(~from=0, ~to_=6, raw);
+      let rest = Js.String.sliceToEnd(~from=6, raw);
+      ["#" ++ chunk, ...loop(rest)];
+    };
+  let colors = loop(rawColors)->Belt.List.toArray;
+
+  [@react.component]
+  let make = (~onPick) => {
+    let (open_, setOpen) = React.useState(() => false);
+
+    <div>
+      <button onClick={evt => setOpen(open_ => !open_)}>
+        {React.string("Color picker")}
+      </button>
+      {open_
+         ? <div>
+             {colors
+              ->Belt.Array.map(hex =>
+                  <button
+                    onClick={_ => {
+                      onPick(hex);
+                      setOpen(_ => false);
+                    }}
+                    style={ReactDOMRe.Style.make(~backgroundColor=hex, ())}
+                    className=Css.(
+                      style([
+                        width(px(20)),
+                        height(px(20)),
+                        borderStyle(`none),
+                        cursor(`pointer),
+                      ])
+                    )
+                  />
+                )
+              ->React.array}
+           </div>
+         : React.null}
+    </div>;
+  };
+};
+
 module Tiles = {
   [@react.component]
   let make = (~scene, ~selection, ~setSelection, ~setHovered, ~setScene) => {
@@ -11,6 +58,19 @@ module Tiles = {
            <div>
              <div> {React.string("Tile")} </div>
              <div>
+               <div
+                 style={ReactDOMRe.Style.make(
+                   ~backgroundColor=tile.color,
+                   (),
+                 )}
+                 className=Css.(
+                   style([
+                     width(px(20)),
+                     height(px(20)),
+                     display(`inlineBlock),
+                   ])
+                 )
+               />
                <input
                  value={tile.color}
                  onChange={evt => {
@@ -21,6 +81,15 @@ module Tiles = {
                        scene.tiles->Belt.Map.String.set(k, {...tile, color}),
                    });
                  }}
+               />
+               <ColorPicker
+                 onPick={color =>
+                   setScene({
+                     ...scene,
+                     tiles:
+                       scene.tiles->Belt.Map.String.set(k, {...tile, color}),
+                   })
+                 }
                />
              </div>
              <div>
