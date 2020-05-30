@@ -62,7 +62,7 @@ module Point = {
 module Tile = {
   let add = (scene, ~sym, sides) => {
     let id = genId();
-    let tile = {sides, sym, color: "blue", margin: 0., order: 0.};
+    let tile = {sides, sym, color: "blue", margin: 2., order: 0.};
     ({...scene, tiles: scene.tiles->S.set(id, tile)}, id);
   };
 };

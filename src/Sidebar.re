@@ -84,6 +84,45 @@ module Tiles = {
   };
 };
 
+module Points = {
+  [@react.component]
+  let make = (~scene, ~setScene) => {
+    <div>
+      {scene.points
+       ->S.toArray
+       ->Belt.Array.map(((k, point)) => {
+           <div key=k>
+             {React.string("Point")}
+             <div>
+               {React.string("Symmetry: ")}
+               {switch (point.sym) {
+                | None => React.null
+                | Some(sym) =>
+                  <input
+                    value={string_of_int(sym.count)}
+                    onChange={evt => {
+                      let value = evt->ReactEvent.Form.target##value;
+                      let count = int_of_string(value);
+                      setScene({
+                        ...scene,
+                        points:
+                          scene.points
+                          ->Belt.Map.String.set(
+                              k,
+                              {...point, sym: Some({...sym, count})},
+                            ),
+                      });
+                    }}
+                  />
+                }}
+             </div>
+           </div>
+         })
+       ->React.array}
+    </div>;
+  };
+};
+
 module Shapes = {
   [@react.component]
   let make =
@@ -223,13 +262,18 @@ let make =
   <div>
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
+      {React.string("Tiles")}
+    </div>
+    <Tiles scene selection setScene setSelection setHovered />
+    <div
+      className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
       {React.string("Shapes")}
     </div>
     <Shapes scene selection selectShape setScene setSelection setHovered />
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
-      {React.string("Tiles")}
+      {React.string("Points")}
     </div>
-    <Tiles scene selection setScene setSelection setHovered />
+    <Points scene setScene />
   </div>;
 };

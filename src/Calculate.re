@@ -111,13 +111,13 @@ let intersectCircles = (ac, ar, bc, br) => {
 
 let intersection = (ap1, ap2, bp1, bp2) => {
   let (m1, b1) = generic(ap1, ap2);
-  let av = ap1.x == ap2.x;
+  let av = abs_float(ap1.x -. ap2.x) < 0.001;
   let (m2, b2) = generic(bp1, bp2);
-  let bv = bp1.x == bp2.x;
+  let bv = abs_float(bp1.x -. bp2.x) < 0.001;
   if (av && bv) {
     None;
   } else if (av) {
-    Some({x: ap1.x, y: ap1.x *. m2 +. b2});
+    Some({x: ap2.x, y: ap2.x *. m2 +. b2});
   } else if (bv) {
     Some({x: bp1.x, y: bp1.x *. m1 +. b1});
   } else if (m1 == m2) {
