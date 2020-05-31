@@ -84,9 +84,9 @@ module Inner = {
         onClick={_ => {
           let (id, blob) = onSave();
           setScreenshots(
-            screenshots->Belt.Array.map(item =>
-              fst(item) == id ? (id, Some(blob)) : item
-            ),
+            screenshots
+            ->Belt.Array.keep(item => fst(item) != id)
+            ->Belt.Array.concat([|(id, Some(blob))|]),
           );
         }}>
         {React.string("Save")}

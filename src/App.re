@@ -152,7 +152,10 @@ let make = (~initial) => {
         onSave={() => {
           let id =
             switch (state.id) {
-            | None => Api.genId()
+            | None =>
+              let id = Api.genId();
+              Controls.Location.setHash(Controls.Location.location, id);
+              id;
             | Some(id) => id
             };
           Gallery.saveState(id, state.scene)->ignore;
