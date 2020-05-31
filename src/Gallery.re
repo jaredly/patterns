@@ -17,7 +17,7 @@
 
 type blob;
 
-let saveState = (id, state) => {
+let saveState = (id, state: Types.scene) => {
   let json = Serialize.serializeAnyToJson(state);
   LocalForage.setItem(LocalForage.toKey(id), json);
 };
@@ -59,13 +59,18 @@ let getScreenshots = () => {
 external createObjectURL: blob => string = "createObjectURL";
 
 [@react.component]
-let make = (~current, ~onLoad) => {
+let make = (~current, ~onLoad, ~onSave) => {
   let screenshots = Hooks.usePromise(getScreenshots);
   switch (screenshots) {
   | None => <div> {React.string("loading...")} </div>
-  | Some([||]) => <div> {React.string("No saved screenshots")} </div>
+  | Some([||]) =>
+    <div>
+      <button onClick={_ => onSave()}> {React.string("Save")} </button>
+      {React.string("No saved screenshots")}
+    </div>
   | Some(screenshots) =>
     <div>
+      <button onClick={_ => onSave()}> {React.string("Save")} </button>
       {screenshots
        ->Belt.Array.map(((id, blob)) => {
            switch (blob) {
@@ -78,7 +83,7 @@ let make = (~current, ~onLoad) => {
                  style(
                    [width(px(100)), height(px(100))]
                    @ (
-                     current == id
+                     current == Some(id)
                        ? [outline(px(3), `solid, hex("faa"))] : []
                    ),
                  )

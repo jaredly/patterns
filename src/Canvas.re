@@ -134,76 +134,6 @@ let polyPath = (transform, items, margin) => {
       );
     })
   |> String.concat(" ");
-  // let (_, parts) =
-  //   items->Belt.List.reduce(
-  //     (None, []),
-  //     ((startp, parts), item) => {
-  //       let (endp, part) =
-  //         switch (item) {
-  //         | CLine({p1, p2}) =>
-  //           Js.log3("Line from", p1, p2);
-  //           let (p1, p2) =
-  //             switch (startp) {
-  //             | None => (p1, p2)
-  //             | Some(startp) =>
-  //               Js.log3(startp, p1, p2);
-  //               almostEqual(p1, startp) ? (p1, p2) : (p2, p1);
-  //             };
-  //           (
-  //             p2,
-  //             (
-  //               parts == []
-  //                 ? Printf.sprintf(
-  //                     "M %0.2f %0.2f",
-  //                     tx(p1.x, transform),
-  //                     ty(p1.y, transform),
-  //                   )
-  //                 : ""
-  //             )
-  //             ++ Printf.sprintf(
-  //                  "L %0.2f %0.2f",
-  //                  tx(p2.x, transform),
-  //                  ty(p2.y, transform),
-  //                ),
-  //           );
-  //         | CCirclePart({center, r, theta0, theta1}) =>
-  //           let start = {
-  //             x: center.x +. cos(theta0) *. r,
-  //             y: center.y +. sin(theta0) *. r,
-  //           };
-  //           let endd = {
-  //             x: center.x +. cos(theta1) *. r,
-  //             y: center.y +. sin(theta1) *. r,
-  //           };
-  //           (endd, "");
-  //         | CCircle(_) => failwith("No circles allowed")
-  //         };
-  //       (Some(endp), [part, ...parts]);
-  //     },
-  //   );
-  // parts->Belt.List.reverse |> String.concat(" ");
-  /* ok */
-  //         switch (item) {
-  //         | `Line(pos) => Printf.sprintf("L %0.2f %0.2f", pos.x, pos.y)
-  //         | `Arc({to_, r, sweep}) =>
-  //           Printf.sprintf(
-  //             {|A %0.2f %0.2f
-  //         0
-  //         %d 1
-  //         %0.2f %0.2f|},
-  //             r,
-  //             r,
-  //             sweep ? 1 : 0,
-  //             to_.x,
-  //             to_.y,
-  //           )
-  //         }
-  //       ),
-  //   ...items->Belt.List.map(item =>
-  // ]
-  //   Printf.sprintf("M %0.2f %0.2f", p0.x, p0.y),
-  // [
-  // |> String.concat(" ");
 };
 
 module Shape = {
@@ -360,6 +290,9 @@ let cmp = (a, b) => a < b ? (-1) : a > b ? 1 : 0;
 [@react.component]
 let make =
     (
+      ~width,
+      ~height,
+      ~innerRef,
       ~hover: option(hover),
       ~transform: transform,
       ~scene: scene,
@@ -374,7 +307,11 @@ let make =
       () => {Calculate.calculateAllPositions(scene)},
       [|scene|],
     );
-  <svg width="1000px" height="1000px">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    ref={ReactDOMRe.Ref.domRef(innerRef)}
+    width={string_of_int(width) ++ "px"}
+    height={string_of_int(height) ++ "px"}>
     // {tiles->Js.Array2.sortInPlaceWith}
 
       {tiles

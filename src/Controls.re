@@ -284,18 +284,34 @@ let getInitial = default => {
   let current =
     Location.hash(Location.location)->Js.Global.decodeURIComponent;
   if (String.length(current) > 1) {
-    let data =
-      Serialize.unserializeAnyFromJsonUnsafe(
-        Js.String2.sliceToEnd(current, ~from=1)->Js.Json.parseExn,
-      );
-    // Hacky data migration!
-    if (Obj.magic(data.tiles) === None) {
-      {...data, tiles: Api.empty};
+    let raw = Js.String2.sliceToEnd(current, ~from=1);
+    if (raw.[0] == '{') {
+      let data =
+        Serialize.unserializeAnyFromJsonUnsafe(raw->Js.Json.parseExn);
+      // Hacky data migration!
+      (
+        None,
+        if (Obj.magic(data.tiles) === None) {
+          {...data, tiles: Api.empty};
+        } else {
+          data;
+        },
+      )
+      |> Js.Promise.resolve;
     } else {
-      data;
+      Gallery.loadState(raw)
+      |> Js.Promise.then_(data =>
+           (
+             switch (data) {
+             | None => (None, default)
+             | Some(data) => (Some(raw), data)
+             }
+           )
+           |> Js.Promise.resolve
+         );
     };
   } else {
-    default;
+    (None, default) |> Js.Promise.resolve;
   };
 };
 
