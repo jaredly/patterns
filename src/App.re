@@ -16,8 +16,8 @@ let scene = {
 type state = {
   id: option(string),
   hover: option([ | `Point(Types.reference) | `Shape(Types.reference)]),
-  showPoints: bool,
-  showTraces: bool,
+  // showPoints: bool,
+  // showTraces: bool,
   scene: Types.scene,
   svgRef: React.ref(Js.Nullable.t(Dom.element)),
   selection: option(Types.selection),
@@ -31,8 +31,8 @@ let loadInitial = () => {
        Js.Promise.resolve({
          id,
          hover: None,
-         showPoints: true,
-         showTraces: true,
+         //  showPoints: true,
+         //  showTraces: true,
          svgRef: {
            current: Js.Nullable.null,
          },
@@ -52,8 +52,26 @@ let reduce = (state, action) => {
     | [] => state
     | [scene, ...history] => {...state, scene, history, selection: None}
     }
-  | `TogglePoints => {...state, showPoints: !state.showPoints}
-  | `ToggleTraces => {...state, showTraces: !state.showTraces}
+  | `TogglePoints => {
+      ...state,
+      scene: {
+        ...scene,
+        presentation: {
+          ...scene.presentation,
+          points: !state.scene.presentation.points,
+        },
+      },
+    }
+  | `ToggleTraces => {
+      ...state,
+      scene: {
+        ...scene,
+        presentation: {
+          ...scene.presentation,
+          traces: !state.scene.presentation.traces,
+        },
+      },
+    }
   | `SelectShape(reference) => {
       ...state,
       selection:
@@ -104,8 +122,8 @@ let make = (~initial) => {
 
   let hw = float_of_int(width) /. 2.0;
   let hh = float_of_int(height) /. 2.0;
-  let (transform, setTransform) =
-    Hooks.useState({Canvas.zoom: 2., dx: 0., dy: 0.});
+  // let (transform, setTransform) =
+  //   Hooks.useState({Canvas.zoom: 2., dx: 0., dy: 0.});
 
   let (state, dispatch) = React.useReducer(reduce, initial);
 
@@ -115,9 +133,9 @@ let make = (~initial) => {
         width
         height
         innerRef={state.svgRef}
-        transform
-        showPoints={state.showPoints}
-        showTraces={state.showTraces}
+        // transform
+        // showPoints={state.showPoints}
+        // showTraces={state.showTraces}
         scene={state.scene}
         hover={state.hover}
         selection={state.selection}
@@ -168,53 +186,42 @@ let make = (~initial) => {
       />
     </div>
     <div>
-      <button
-        onClick={_ => {
-          let nzoom = transform.zoom *. 1.5;
-          let cx = hw /. transform.zoom +. transform.dx;
-          let cy = hh /. transform.zoom +. transform.dy;
-          let ndx = cx -. hw /. nzoom;
-          let ndy = cy -. hh /. nzoom;
-          Js.log3("ok", cx, cy);
-          setTransform({zoom: nzoom, dx: ndx, dy: ndy});
-        }}>
-        {React.string("+")}
-      </button>
-      <button
-        onClick={_ => {
-          let nzoom = transform.zoom /. 1.5;
-          let cx = hw /. transform.zoom +. transform.dx;
-          let cy = hh /. transform.zoom +. transform.dy;
-          let ndx = cx -. hw /. nzoom;
-          let ndy = cy -. hh /. nzoom;
-          setTransform({zoom: nzoom, dx: ndx, dy: ndy});
-        }}>
-        {React.string("-")}
-      </button>
       {React.string("Zoom")}
       <input
-        value={transform.zoom->Js.Float.toString}
+        value={state.scene.presentation.transform.zoom->Js.Float.toString}
         onChange={evt => {
           let zoom = evt->ReactEvent.Form.target##value->Js.Float.fromString;
-          setTransform({...transform, zoom});
+          dispatch(
+            `SetScene({
+              ...state.scene,
+              presentation: {
+                ...state.scene.presentation,
+                transform: {
+                  ...state.scene.presentation.transform,
+                  zoom,
+                },
+              },
+            }),
+          );
         }}
+        // setTransform({...transform, zoom});
       />
-      {React.string("dx")}
-      <input
-        value={transform.dx->Js.Float.toString}
-        onChange={evt => {
-          let dx = evt->ReactEvent.Form.target##value->Js.Float.fromString;
-          setTransform({...transform, dx});
-        }}
-      />
-      {React.string("dy")}
-      <input
-        value={transform.dy->Js.Float.toString}
-        onChange={evt => {
-          let dy = evt->ReactEvent.Form.target##value->Js.Float.fromString;
-          setTransform({...transform, dy});
-        }}
-      />
+      // {React.string("dx")}
+      // <input
+      //   value={transform.dx->Js.Float.toString}
+      //   onChange={evt => {
+      //     let dx = evt->ReactEvent.Form.target##value->Js.Float.fromString;
+      //     setTransform({...transform, dx});
+      //   }}
+      // />
+      // {React.string("dy")}
+      // <input
+      //   value={transform.dy->Js.Float.toString}
+      //   onChange={evt => {
+      //     let dy = evt->ReactEvent.Form.target##value->Js.Float.fromString;
+      //     setTransform({...transform, dy});
+      //   }}
+      // />
       <Sidebar
         scene={state.scene}
         selection={state.selection}
@@ -226,4 +233,27 @@ let make = (~initial) => {
       />
     </div>
   </div>;
+  // </button>
+  //   {React.string("-")}
+  //   }}>
+  //     setTransform({zoom: nzoom, dx: ndx, dy: ndy});
+  //     let ndy = cy -. hh /. nzoom;
+  //     let ndx = cx -. hw /. nzoom;
+  //     let cy = hh /. scene.presentation.transform.zoom +. scene.presentation.transform.center.y;
+  //     let cx = hw /. scene.presentation.transform.zoom +. scene.presentation.transform.center.x;
+  //     let nzoom = scene.presentation.transform.zoom /. 1.5;
+  //   onClick={_ => {
+  // <button
+  // </button>
+  //   {React.string("+")}
+  //   }}>
+  //     setTransform({zoom: nzoom, dx: ndx, dy: ndy});
+  //     Js.log3("ok", cx, cy);
+  //     // let ndy = cy -. hh /. nzoom;
+  //     // let ndx = cx -. hw /. nzoom;
+  //     // let cy = hh /. scene.presentation.transform.zoom +. scene.presentation.transform.center.y;
+  //     // let cx = hw /. scene.presentation.transform.zoom +. scene.presentation.transform.center.x;
+  //     let nzoom = scene.presentation.transform.zoom *. 1.5;
+  //   onClick={_ => {
+  // <button
 };

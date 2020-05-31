@@ -310,20 +310,26 @@ type shapes = Belt.Map.String.t(shape);
 type tiles = Belt.Map.String.t(tile);
 // type shapeSymmetries = Belt.Map.String.t(shapeSymm);
 
+type transform = {
+  zoom: float,
+  center: pos,
+};
+
 type presentation = {
   points: bool,
   traces: bool,
-  zoom: float,
-  center: pos,
+  transform,
 };
 
 let defaultPresentation = {
   points: true,
   traces: true,
-  zoom: 1.0,
-  center: {
-    x: 0.,
-    y: 0.,
+  transform: {
+    zoom: 1.0,
+    center: {
+      x: 0.,
+      y: 0.,
+    },
   },
 };
 

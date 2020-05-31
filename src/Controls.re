@@ -315,6 +315,14 @@ let permalink = (scene: scene) => {
   );
 };
 
+let upgrade = data => {
+  ...data,
+  tiles: Obj.magic(data.tiles) == None ? Api.empty : data.tiles,
+  presentation:
+    Obj.magic(data.presentation) == None
+      ? Types.defaultPresentation : data.presentation,
+};
+
 let getInitial = default => {
   let current =
     Location.hash(Location.location)->Js.Global.decodeURIComponent;
@@ -324,22 +332,14 @@ let getInitial = default => {
       let data =
         Serialize.unserializeAnyFromJsonUnsafe(raw->Js.Json.parseExn);
       // Hacky data migration!
-      (
-        None,
-        if (Obj.magic(data.tiles) === None) {
-          {...data, tiles: Api.empty};
-        } else {
-          data;
-        },
-      )
-      |> Js.Promise.resolve;
+      (None, upgrade(data)) |> Js.Promise.resolve;
     } else {
       Gallery.loadState(raw)
       |> Js.Promise.then_(data =>
            (
              switch (data) {
              | None => (None, default)
-             | Some(data) => (Some(raw), data)
+             | Some(data) => (Some(raw), upgrade(data))
              }
            )
            |> Js.Promise.resolve

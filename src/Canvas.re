@@ -11,14 +11,8 @@ open Types;
 //     }
 // }
 
-type transform = {
-  zoom: float,
-  dx: float,
-  dy: float,
-};
-
-let tx = (x, transform) => (x -. transform.dx) *. transform.zoom;
-let ty = (y, transform) => (y -. transform.dy) *. transform.zoom;
+let tx = (x, transform) => (x -. transform.center.x) *. transform.zoom;
+let ty = (y, transform) => (y -. transform.center.x) *. transform.zoom;
 let tf = (f, transform) => f *. transform.zoom;
 
 let s = Js.Float.toString;
@@ -294,14 +288,15 @@ let make =
       ~height,
       ~innerRef,
       ~hover: option(hover),
-      ~transform: transform,
+      // ~transform: transform,
       ~scene: scene,
       ~selection: option(selection),
       ~selectPoint: reference => unit,
       ~selectShape: reference => unit,
-      ~showPoints,
-      ~showTraces,
     ) => {
+  // ~showPoints,
+  // ~showTraces,
+
   let (_positions, points, shapes, tiles) =
     React.useMemo1(
       () => {Calculate.calculateAllPositions(scene)},
@@ -322,12 +317,12 @@ let make =
            <path
              key={toId(k)}
              fill=color
-             d={polyPath(transform, sides, margin)}
+             d={polyPath(scene.presentation.transform, sides, margin)}
            />
          })
        ->React.array}
       {(
-         showTraces
+         scene.presentation.traces
            ? shapes : shapes->Belt.Array.keep(((_, _, c)) => c != None)
        )
        //  ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
@@ -349,7 +344,7 @@ let make =
                )
                || isShapeHovered(selection, k)
              }
-             transform
+             transform={scene.presentation.transform}
              isSelected={isShapeSelected(selection, k)}
              onSelect={() => selectShape(k)}
              key={toId(k)}
@@ -357,13 +352,13 @@ let make =
            />
          )
        ->React.array}
-      {showPoints
+      {scene.presentation.points
          ? points
            ->Belt.Array.map(((k, {x, y})) => {
                <circle
                  key={toId(k)}
-                 cx={Js.Float.toString(tx(x, transform))}
-                 cy={Js.Float.toString(ty(y, transform))}
+                 cx={Js.Float.toString(tx(x, scene.presentation.transform))}
+                 cy={Js.Float.toString(ty(y, scene.presentation.transform))}
                  onClick={_ => selectPoint(k)}
                  r="2"
                  //  fill={k.index == 0 ? "red" : "rgba(0,0,255,0.2)"}
