@@ -8,6 +8,7 @@ let init = () => {
   // symmetries: empty,
   shapes: empty,
   tiles: empty,
+  presentation: defaultPresentation,
   // shapeSymmetries: empty,
 };
 

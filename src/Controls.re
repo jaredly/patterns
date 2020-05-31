@@ -1,5 +1,40 @@
 open Types;
 
+module TranslateEverything = {
+  [@react.component]
+  let make = (~scene, ~setScene) => {
+    let (dx, setDx) = Hooks.useState(0);
+    let (dy, setDy) = Hooks.useState(0);
+    <div>
+      <input
+        type_="number"
+        value={string_of_int(dx)}
+        onChange={evt =>
+          setDx(int_of_string(evt->ReactEvent.Form.target##value))
+        }
+      />
+      <input
+        type_="number"
+        value={string_of_int(dy)}
+        onChange={evt =>
+          setDy(int_of_string(evt->ReactEvent.Form.target##value))
+        }
+      />
+      <button
+        onClick={_ =>
+          setScene(
+            Calculate.translateEverything(
+              scene,
+              {x: float_of_int(dx), y: float_of_int(dy)},
+            ),
+          )
+        }>
+        {React.string("Translate scene")}
+      </button>
+    </div>;
+  };
+};
+
 let setColors = (setColor, shapes, color) =>
   shapes->Belt.List.forEach(r => setColor(r, color));
 
@@ -378,5 +413,6 @@ let make =
          </button>
        )
      ->React.array}
+    <TranslateEverything scene setScene />
   </div>;
 };

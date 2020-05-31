@@ -598,3 +598,21 @@ let inset = (ordered, margin) => {
   // pushed;
   clipped;
 };
+
+let translatePos = (pos, rel) => {
+  switch (pos) {
+  | Abs({x, y}) => Abs({x: x +. rel.x, y: y +. rel.y})
+  | pos => pos
+  };
+};
+
+let translateEverything = (scene: scene, rel) => {
+  {
+    ...scene,
+    points:
+      scene.points
+      ->Belt.Map.String.map(point =>
+          {...point, pos: translatePos(point.pos, rel)}
+        ),
+  };
+};
