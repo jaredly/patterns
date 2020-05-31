@@ -46,6 +46,7 @@ let loadInitial = () => {
 let reduce = (state, action) => {
   switch (action) {
   | `SetHover(hover) => {...state, hover}
+  | `Load(id, scene) => {...state, id: Some(id), scene}
   | `Undo =>
     switch (state.history) {
     | [] => state
@@ -136,7 +137,17 @@ let make = (~initial) => {
       <Gallery
         current={state.id}
         onLoad={id => {
-          Controls.Location.setHash(Controls.Location.location, id)
+          Gallery.loadState(id)
+          |> Js.Promise.then_(scene => {
+               switch (scene) {
+               | None => ()
+               | Some(scene) =>
+                 Controls.Location.setHash(Controls.Location.location, id);
+                 dispatch(`Load((id, scene)));
+               };
+               Js.Promise.resolve();
+             })
+          |> ignore
         }}
         onSave={() => {
           let id =
@@ -149,8 +160,8 @@ let make = (~initial) => {
             "new Blob([state.svgRef.current.outerHTML], {type: 'image/svg+xml'})"
           ];
           Gallery.saveScreenshot(id, blob)->ignore;
+          (id, blob);
         }}
-        // (id, blob)
       />
     </div>
     <div>

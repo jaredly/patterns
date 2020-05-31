@@ -58,41 +58,76 @@ let getScreenshots = () => {
 [@bs.val] [@bs.scope "URL"]
 external createObjectURL: blob => string = "createObjectURL";
 
-[@react.component]
-let make = (~current, ~onLoad, ~onSave) => {
-  let screenshots = Hooks.usePromise(getScreenshots);
-  switch (screenshots) {
-  | None => <div> {React.string("loading...")} </div>
-  | Some([||]) =>
+[@bs.val] [@bs.scope "URL"]
+external revokeObjectURL: string => unit = "revokeObjectURL";
+
+let useBlob = blob => {
+  let url = React.useMemo1(() => createObjectURL(blob), [|blob|]);
+  React.useEffect1(() => {Some(() => revokeObjectURL(url))}, [|url|]);
+  url;
+};
+
+module BlobImage = {
+  [@react.component]
+  let make = (~blob, ~children) => {
+    let url = useBlob(blob);
+    children(url);
+  };
+};
+
+module Inner = {
+  [@react.component]
+  let make = (~current, ~onLoad, ~onSave, ~initial) => {
+    let (screenshots, setScreenshots) = Hooks.useState(initial);
     <div>
-      <button onClick={_ => onSave()}> {React.string("Save")} </button>
-      {React.string("No saved screenshots")}
-    </div>
-  | Some(screenshots) =>
-    <div>
-      <button onClick={_ => onSave()}> {React.string("Save")} </button>
+      <button
+        onClick={_ => {
+          let (id, blob) = onSave();
+          setScreenshots(
+            screenshots->Belt.Array.map(item =>
+              fst(item) == id ? (id, Some(blob)) : item
+            ),
+          );
+        }}>
+        {React.string("Save")}
+      </button>
+      {screenshots == [||] ? React.string("No saved screenshots") : React.null}
       {screenshots
        ->Belt.Array.map(((id, blob)) => {
            switch (blob) {
            | None => React.null
            | Some(blob) =>
-             let url = createObjectURL(blob);
-             <img
-               onClick={_ => onLoad(id)}
-               className=Css.(
-                 style(
-                   [width(px(100)), height(px(100))]
-                   @ (
-                     current == Some(id)
-                       ? [outline(px(3), `solid, hex("faa"))] : []
-                   ),
-                 )
-               )
-               src=url
-             />;
+             //  let url = createObjectURL(blob);
+             <BlobImage blob key=id>
+               {(
+                  src =>
+                    <img
+                      onClick={_ => onLoad(id)}
+                      className=Css.(
+                        style(
+                          [width(px(100)), height(px(100))]
+                          @ (
+                            current == Some(id)
+                              ? [outline(px(3), `solid, hex("faa"))] : []
+                          ),
+                        )
+                      )
+                      src
+                    />
+                )}
+             </BlobImage>
            }
          })
        ->React.array}
-    </div>
+    </div>;
+  };
+};
+
+[@react.component]
+let make = (~current, ~onLoad, ~onSave) => {
+  let screenshots = Hooks.usePromise(getScreenshots);
+  switch (screenshots) {
+  | None => <div> {React.string("loading...")} </div>
+  | Some(screenshots) => <Inner current onLoad onSave initial=screenshots />
   };
 };
