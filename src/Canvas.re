@@ -393,13 +393,13 @@ let make =
          showTraces
            ? shapes : shapes->Belt.Array.keep(((_, _, c)) => c != None)
        )
-       ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
-           switch (a, b) {
-           | (None, Some(_)) => (-1)
-           | (Some(_), None) => 1
-           | _ => 0
-           }
-         )
+       //  ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
+       //      switch (a, b) {
+       //      | (None, Some(_)) => (-1)
+       //      | (Some(_), None) => 1
+       //      | _ => 0
+       //      }
+       //    )
        ->Belt.Array.map(((k, shape, color)) =>
            <Shape
              color

@@ -2,6 +2,7 @@
     "dependencies": {
         "bs-css-emotion": "^1.2.0",
         "bs-platform": "^7.3.2",
+        "localforage": "^1.7.3",
         "parcel": "^1.12.4",
         "react": "^16.13.1",
         "react-dom": "^16.13.1",

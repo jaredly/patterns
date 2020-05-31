@@ -48,8 +48,6 @@ let scene = {
   scene;
 };
 
-let useState = initial => React.useReducer((_, a) => a, initial);
-
 module App = {
   type state = {
     hover: option([ | `Point(Types.reference) | `Shape(Types.reference)]),
@@ -124,7 +122,7 @@ module App = {
   [@react.component]
   let make = () => {
     let (transform, setTransform) =
-      useState({Canvas.zoom: 2., dx: 0., dy: 0.});
+      Hooks.useState({Canvas.zoom: 2., dx: 0., dy: 0.});
     let (state, dispatch) = React.useReducer(reduce, initial);
     // let (scene, updateScene) = React.useState(() => scene);
     // let (selection, setSelection) = React.useState(() => None);
@@ -186,6 +184,7 @@ module App = {
           setSelection={s => dispatch(`SetSelection(s))}
         />
       </div>
+      <Gallery current="" onLoad={id => {Js.log(id)}} />
     </div>;
   };
 };
