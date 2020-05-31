@@ -12,6 +12,8 @@ let dpos = (p1, p2) => {
   {x, y};
 };
 
+let addPos = (a, b) => {x: a.x +. b.x, y: a.y +. b.y};
+
 let toPos = ((x, y)) => {x, y};
 
 let rotateAround = (point, center, theta) => {

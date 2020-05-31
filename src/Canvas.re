@@ -288,20 +288,30 @@ let make =
       ~height,
       ~innerRef,
       ~hover: option(hover),
-      // ~transform: transform,
       ~scene: scene,
       ~selection: option(selection),
       ~selectPoint: reference => unit,
       ~selectShape: reference => unit,
     ) => {
-  // ~showPoints,
-  // ~showTraces,
-
   let (_positions, points, shapes, tiles) =
     React.useMemo1(
       () => {Calculate.calculateAllPositions(scene)},
       [|scene|],
     );
+
+  let transform = {
+    zoom: scene.presentation.transform.zoom,
+    center:
+      Calculate.addPos(
+        scene.presentation.transform.center,
+        {
+          x: -. float_of_int(width) /. 2. /. scene.presentation.transform.zoom,
+          y:
+            -. float_of_int(height) /. 2. /. scene.presentation.transform.zoom,
+        },
+      ),
+  };
+
   <svg
     xmlns="http://www.w3.org/2000/svg"
     ref={ReactDOMRe.Ref.domRef(innerRef)}
@@ -317,7 +327,7 @@ let make =
            <path
              key={toId(k)}
              fill=color
-             d={polyPath(scene.presentation.transform, sides, margin)}
+             d={polyPath(transform, sides, margin)}
            />
          })
        ->React.array}
@@ -344,7 +354,7 @@ let make =
                )
                || isShapeHovered(selection, k)
              }
-             transform={scene.presentation.transform}
+             transform
              isSelected={isShapeSelected(selection, k)}
              onSelect={() => selectShape(k)}
              key={toId(k)}
@@ -357,8 +367,8 @@ let make =
            ->Belt.Array.map(((k, {x, y})) => {
                <circle
                  key={toId(k)}
-                 cx={Js.Float.toString(tx(x, scene.presentation.transform))}
-                 cy={Js.Float.toString(ty(y, scene.presentation.transform))}
+                 cx={Js.Float.toString(tx(x, transform))}
+                 cy={Js.Float.toString(ty(y, transform))}
                  onClick={_ => selectPoint(k)}
                  r="2"
                  //  fill={k.index == 0 ? "red" : "rgba(0,0,255,0.2)"}

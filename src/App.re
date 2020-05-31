@@ -120,11 +120,6 @@ let make = (~initial) => {
   let width = 1000;
   let height = 1000;
 
-  let hw = float_of_int(width) /. 2.0;
-  let hh = float_of_int(height) /. 2.0;
-  // let (transform, setTransform) =
-  //   Hooks.useState({Canvas.zoom: 2., dx: 0., dy: 0.});
-
   let (state, dispatch) = React.useReducer(reduce, initial);
 
   <div className=Css.(style([display(`flex), flexDirection(`row)]))>
@@ -133,9 +128,6 @@ let make = (~initial) => {
         width
         height
         innerRef={state.svgRef}
-        // transform
-        // showPoints={state.showPoints}
-        // showTraces={state.showTraces}
         scene={state.scene}
         hover={state.hover}
         selection={state.selection}
