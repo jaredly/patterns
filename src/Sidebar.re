@@ -328,21 +328,39 @@ let make =
       ~setSelection,
       ~setHovered,
     ) => {
-  <div>
+  <div
+    className=Css.(
+      style([height(px(1000)), display(`flex), flexDirection(`column)])
+    )>
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
       {React.string("Tiles")}
     </div>
-    <Tiles scene selection setScene setSelection setHovered />
+    <div
+      className=Css.(
+        style([flex(`num(1.)), minHeight(`px(0)), overflow(`auto)])
+      )>
+      <Tiles scene selection setScene setSelection setHovered />
+    </div>
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
       {React.string("Shapes")}
     </div>
-    <Shapes scene selection selectShape setScene setSelection setHovered />
+    <div
+      className=Css.(
+        style([flex(`num(1.)), minHeight(`px(0)), overflow(`auto)])
+      )>
+      <Shapes scene selection selectShape setScene setSelection setHovered />
+    </div>
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
       {React.string("Points")}
     </div>
-    <Points scene setScene />
+    <div
+      className=Css.(
+        style([flex(`num(1.)), minHeight(`px(0)), overflow(`auto)])
+      )>
+      <Points scene setScene />
+    </div>
   </div>;
 };

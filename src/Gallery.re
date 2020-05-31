@@ -93,6 +93,7 @@ module Inner = {
       </button>
       {screenshots == [||] ? React.string("No saved screenshots") : React.null}
       {screenshots
+       ->Js.Array2.sortInPlaceWith((a, b) => compare(fst(a), fst(b)))
        ->Belt.Array.map(((id, blob)) => {
            switch (blob) {
            | None => React.null

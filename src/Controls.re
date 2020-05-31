@@ -315,14 +315,6 @@ let permalink = (scene: scene) => {
   );
 };
 
-let upgrade = data => {
-  ...data,
-  tiles: Obj.magic(data.tiles) == None ? Api.empty : data.tiles,
-  presentation:
-    Obj.magic(data.presentation) == None
-      ? Types.defaultPresentation : data.presentation,
-};
-
 let getInitial = default => {
   let current =
     Location.hash(Location.location)->Js.Global.decodeURIComponent;
@@ -332,14 +324,14 @@ let getInitial = default => {
       let data =
         Serialize.unserializeAnyFromJsonUnsafe(raw->Js.Json.parseExn);
       // Hacky data migration!
-      (None, upgrade(data)) |> Js.Promise.resolve;
+      (None, Versions.upgrade(data)) |> Js.Promise.resolve;
     } else {
       Gallery.loadState(raw)
       |> Js.Promise.then_(data =>
            (
              switch (data) {
              | None => (None, default)
-             | Some(data) => (Some(raw), upgrade(data))
+             | Some(data) => (Some(raw), Versions.upgrade(data))
              }
            )
            |> Js.Promise.resolve
@@ -370,12 +362,12 @@ let make =
         setScene(
           {
             let scene = Api.init();
-            let (scene, center) = scene->Api.Point.abs(250., 250.);
+            let (scene, center) = scene->Api.Point.abs(0., 0.);
             let (scene, _) =
               scene->Api.Point.abs(
                 ~sym=Some({center: Api.Ref.id(center), count: 12}),
-                250.,
-                150.,
+                0.,
+                -200.,
               );
             scene;
           },

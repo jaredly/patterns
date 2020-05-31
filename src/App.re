@@ -2,13 +2,9 @@ let scene = {
   open Api;
   open Types;
   let scene = init();
-  let (scene, id2) = scene->Point.abs(250., 250.);
+  let (scene, id2) = scene->Point.abs(0., 0.);
   let (scene, _id1) =
-    scene->Point.abs(
-      ~sym=Some({center: Ref.id(id2), count: 5}),
-      200.,
-      200.,
-    );
+    scene->Point.abs(~sym=Some({center: Ref.id(id2), count: 5}), 0., -200.);
 
   scene;
 };
@@ -55,9 +51,9 @@ let reduce = (state, action) => {
   | `TogglePoints => {
       ...state,
       scene: {
-        ...scene,
+        ...state.scene,
         presentation: {
-          ...scene.presentation,
+          ...state.scene.presentation,
           points: !state.scene.presentation.points,
         },
       },
@@ -65,9 +61,9 @@ let reduce = (state, action) => {
   | `ToggleTraces => {
       ...state,
       scene: {
-        ...scene,
+        ...state.scene,
         presentation: {
-          ...scene.presentation,
+          ...state.scene.presentation,
           traces: !state.scene.presentation.traces,
         },
       },
@@ -117,8 +113,8 @@ let reduce = (state, action) => {
 
 [@react.component]
 let make = (~initial) => {
-  let width = 1000;
-  let height = 1000;
+  let width = 800;
+  let height = 800;
 
   let (state, dispatch) = React.useReducer(reduce, initial);
 
@@ -153,7 +149,7 @@ let make = (~initial) => {
                | None => ()
                | Some(scene) =>
                  Controls.Location.setHash(Controls.Location.location, id);
-                 dispatch(`Load((id, scene)));
+                 dispatch(`Load((id, Versions.upgrade(scene))));
                };
                Js.Promise.resolve();
              })
