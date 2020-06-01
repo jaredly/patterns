@@ -271,7 +271,7 @@ and calculatePoint = (point: point, scene: scene, positions: positions) => {
 
 module S = Belt.Map.String;
 
-let shape = (shape: shapeKind, scene: scene, positions: positions) =>
+let calculateShape = (shape: shapeKind, scene: scene, positions: positions) =>
   switch (shape) {
   | Line({p1, p2}) =>
     let p1 = resolvePoint(p1, scene, positions);
@@ -334,7 +334,7 @@ let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
 
 let resolveShape = (scene, ref, positions) => {
   let {kind, sym} = scene.shapes->S.getExn(ref.id);
-  let base = shape(kind, scene, positions);
+  let base = calculateShape(kind, scene, positions);
   if (ref.index == 0) {
     base;
   } else {
@@ -390,7 +390,7 @@ let calculateShapes = (scene, positions) => {
   scene.shapes
   ->S.toArray
   ->Belt.Array.map(((k, {kind, sym, color})) => {
-      let one = shape(kind, scene, positions);
+      let one = calculateShape(kind, scene, positions);
       switch (sym) {
       | None => [|({id: k, index: 0}, one, color)|]
 
@@ -618,3 +618,122 @@ let translateEverything = (scene: scene, rel) => {
         ),
   };
 };
+
+let bestSym = (sym, sym2) =>
+  switch (sym, sym2) {
+  | (None, Some(x)) => Some(x)
+  | (Some(x), None) => Some(x)
+  | (Some(a), Some(b)) => a.count > b.count ? Some(b) : Some(a)
+  | _ => None
+  };
+
+let potentials = (scene: scene, selection: option(selection), positions) =>
+  (
+    switch (selection) {
+    | Some(Points([p2, p1])) =>
+      let {pos: _, sym} = Belt.Map.String.getExn(scene.points, p1.id);
+      let {pos: _, sym: sym2} = Belt.Map.String.getExn(scene.points, p2.id);
+      let sym = bestSym(sym, sym2);
+      [
+        `Shape({kind: Line({p1, p2}), sym, color: None}),
+        `Shape({kind: Circle({center: p1, onEdge: p2}), sym, color: None}),
+        `Point({
+          sym,
+          pos: Line({source: p1, dest: p2, percentOrAbs: Percent(0.5)}),
+        }),
+        `Point({
+          sym,
+          pos: Line({source: p1, dest: p2, percentOrAbs: Percent(2.)}),
+        }),
+      ];
+    | Some(Shapes(shapes)) =>
+      let found =
+        shapes->Belt.List.map(r =>
+          (
+            r,
+            scene.shapes->Belt.Map.String.getExn(r.id),
+            resolveShape(scene, r, positions),
+          )
+        );
+      found
+      ->Belt.List.map(((r, shape, concrete)) => {
+          switch (concrete) {
+          | CLine({p1, p2}) => [
+              `Point({
+                sym: shape.sym,
+                pos:
+                  Abs({
+                    x: p1.x +. (p2.x -. p1.x) /. 2.,
+                    y: p1.y +. (p2.y -. p1.y) /. 2.,
+                  }),
+              }),
+            ]
+          | _ => []
+          }
+        })
+      ->Belt.List.toArray
+      ->Belt.List.concatMany
+      @ (
+        switch (found) {
+        | [(_, s1, CLine(l1)), (_, s2, CLine(l2))] =>
+          let cross = intersection(l1.p1, l1.p2, l2.p1, l2.p2);
+          switch (cross) {
+          | None => []
+          | Some(cross) => [
+              `Point({
+                sym: bestSym(s1.sym, s2.sym),
+                pos: Abs({x: cross.x, y: cross.y}),
+              }),
+            ]
+          };
+        | [(_, sl, CLine(l1)), (_, sc, CCircle(c1))]
+        | [(_, sc, CCircle(c1)), (_, sl, CLine(l1))] =>
+          let crosses = lineCircle(c1.center, c1.r, l1.p1, l1.p2);
+          let sym = bestSym(sl.sym, sc.sym);
+          crosses->Belt.List.map(point => {
+            `Point
+              ({sym, pos: Abs({x: point.x, y: point.y})})
+              // (scene, [{id, index: 0}, ...ids]);
+              //   scene->Api.Point.abs(~sym, point.x, point.y);
+              // let (scene, id) =
+          });
+        | _ => []
+        }
+      );
+    // Oooh here we get to a tricky bit, so lets skip it.
+    // shapes
+    // ->Belt.List.keepMap(r =>
+    //     switch (scene.shapes->Belt.Map.String.get(r.id)) {
+    //     | None => None
+    //     | Some(shape) => Some((r, shape))
+    //     }
+    //   )
+    // ->Belt.List.map(((r, shape)) =>
+    //     switch (shape.kind) {
+    //     | Line({p1, p2}) => [
+    //         `Point({
+    //           sym: shape.sym,
+    //           pos:
+    //             Line({source: p1, dest: p2, percentOrAbs: Percent(0.5)}),
+    //         }),
+    //       ]
+    //     | _ => []
+    //     }
+    //   )
+    // ->Belt.List.toArray
+    // ->Belt.List.concatMany
+    // []
+    // midpoint
+    // line
+    | _ => []
+    }
+  )
+  ->Belt.List.map(item =>
+      switch (item) {
+      // TODO maybe syms?
+      | `Point(point) =>
+        `Point((point, calculatePoint(point, scene, positions)))
+      | `Shape(shape) =>
+        `Shape((shape, calculateShape(shape.kind, scene, positions)))
+      }
+    );

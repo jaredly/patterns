@@ -293,6 +293,24 @@ let isSelected = (selection, r) =>
 
 let cmp = (a, b) => a < b ? (-1) : a > b ? 1 : 0;
 
+module Point = {
+  [@react.component]
+  let make =
+      (~pos as {x, y}, ~onClick, ~transform, ~isSelected, ~isHovered, ~size) => {
+    <circle
+      cx={Js.Float.toString(tx(x, transform))}
+      cy={Js.Float.toString(ty(y, transform))}
+      onClick
+      r={string_of_int(size)}
+      fill="rgba(255,255,255,0.2)"
+      stroke="rgba(0,0,0,0.5)"
+      strokeWidth={isSelected || isHovered ? "3" : "1"}
+      //  strokeWidth={isSelected(selection, k) ? "3" : "0"}
+      style={ReactDOMRe.Style.make(~cursor="pointer", ())}
+    />;
+  };
+};
+
 [@react.component]
 let make =
     (
@@ -305,11 +323,19 @@ let make =
       ~selectPoint: reference => unit,
       ~selectShape: reference => unit,
       ~selectTile: reference => unit,
+      ~setScene,
+      ~setSelection,
     ) => {
-  let (_positions, points, shapes, tiles) =
+  let (positions, points, shapes, tiles) =
     React.useMemo1(
       () => {Calculate.calculateAllPositions(scene)},
       [|scene|],
+    );
+
+  let potentials =
+    React.useMemo2(
+      () => Calculate.potentials(scene, selection, positions),
+      (scene, selection),
     );
 
   let transform = {
@@ -387,25 +413,63 @@ let make =
        ->React.array}
       {scene.presentation.points
          ? points
-           ->Belt.Array.map(((k, {x, y})) => {
-               <circle
+           ->Belt.Array.map(((k, pos)) => {
+               <Point
                  key={toId(k)}
-                 cx={Js.Float.toString(tx(x, transform))}
-                 cy={Js.Float.toString(ty(y, transform))}
+                 size=2
                  onClick={_ => selectPoint(k)}
-                 r="2"
-                 //  fill={k.index == 0 ? "red" : "rgba(0,0,255,0.2)"}
-                 fill="rgba(255,255,255,0.2)"
-                 stroke="rgba(0,0,0,0.5)"
-                 strokeWidth={
-                   isSelected(selection, k) || hover == Some(`Point(k))
-                     ? "3" : "1"
-                 }
-                 //  strokeWidth={isSelected(selection, k) ? "3" : "0"}
-                 style={ReactDOMRe.Style.make(~cursor="pointer", ())}
+                 transform
+                 pos
+                 isSelected={isSelected(selection, k)}
+                 isHovered={hover == Some(`Point(k))}
                />
              })
            ->React.array
          : React.null}
+      {potentials
+       ->Belt.List.sort((a, b) =>
+           switch (a, b) {
+           | (`Point(_), `Shape(_)) => 1
+           | (`Shape(_), `Point(_)) => (-1)
+           | _ => 0
+           }
+         )
+       ->Belt.List.toArray
+       ->Belt.Array.mapWithIndex((i, item) =>
+           switch (item) {
+           | `Point(point, pos) =>
+             <Point
+               key={string_of_int(i)}
+               onClick={_ => {
+                 let (scene, k) =
+                   scene->Api.Point.add(~sym=point.sym, point.pos);
+                 setScene(scene);
+                 setSelection(Some(Points([{id: k, index: 0}])));
+                 // TODO
+                 ();
+               }}
+               size=4
+               transform
+               pos
+               isSelected=true
+               isHovered=true
+             />
+           | `Shape(shape, concrete) =>
+             <Shape
+               color=None
+               isHovered=true
+               transform
+               isSelected=true
+               onSelect={() => {
+                 let (scene, k) = scene->Api.Shape.addFull(shape);
+                 setScene(scene);
+                 setSelection(Some(Shapes([{id: k, index: 0}])));
+               }}
+               key={string_of_int(i)}
+               shape=concrete
+             />
+           }
+         )
+       ->React.array}
     </svg>;
 };

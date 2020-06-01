@@ -147,6 +147,8 @@ let make = (~initial) => {
         selectPoint={res => dispatch(`SelectPoint(res))}
         selectShape={res => dispatch(`SelectShape(res))}
         selectTile={res => dispatch(`SelectTile(res))}
+        setScene={s => dispatch(`SetScene(s))}
+        setSelection={s => dispatch(`SetSelection(s))}
       />
       <Controls
         selection={state.selection}

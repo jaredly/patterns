@@ -74,10 +74,13 @@ module Shape = {
     let shape = scene.shapes->S.getExn(id);
     {...scene, shapes: scene.shapes->S.set(id, {...shape, color})};
   };
-  let add = (scene, ~sym=None, shape) => {
-    let shape = {kind: shape, sym, color: None};
+  let addFull = (scene, shape) => {
     let id = genId();
     ({...scene, shapes: S.set(scene.shapes, id, shape)}, id);
+  };
+  let add = (scene, ~sym=None, shape) => {
+    let shape = {kind: shape, sym, color: None};
+    addFull(scene, shape);
   };
   let line = (scene, ~sym=None, p1, p2) => add(scene, ~sym, Line({p1, p2}));
   let circle = (scene, ~sym=None, center, onEdge) =>
