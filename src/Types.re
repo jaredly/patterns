@@ -62,17 +62,12 @@ type percentOrAbs =
 // or "virtual", which is like "the nth symmetry around x point"?
 // Orr wait I keep track of symmetries too ...
 // Where a symmetry references a center point and has a count.
-type reference =
-  | Actual(string)
-  | Virtual({
-      // hmm but this way a symmetry doesn't know about what's using it.
-      // Would it work to just be "symmetry, nth point of that"
-      // Yeah sounds reasonable.
-      symmetry: string,
-      index: int,
-    });
+type reference = {
+  id: string,
+  index: int,
+};
 
-type point =
+type pointPos =
   | Abs({
       x: float,
       y: float,
@@ -81,6 +76,17 @@ type point =
       source: reference,
       dest: reference,
       percentOrAbs,
+    })
+  | Rotate({
+      source: reference,
+      dest: reference,
+      theta: float,
+    })
+  | RotateBetween({
+      one: reference,
+      middle: reference,
+      two: reference,
+      amount: float,
     })
   | Circle({
       center: reference,
@@ -107,16 +113,16 @@ type point =
 
 type symm = {
   center: reference,
-  point: string,
+  // point: string,
   count: int,
 };
 
-type shapeSymm = {
-  center: reference,
-  shape: string,
-  count: int,
-  // missing: list(int) // should be a set
-};
+// type shapeSymm = {
+//   center: reference,
+//   // shape: string,
+//   count: int,
+//   // missing: list(int) // should be a set
+// };
 
 // Do we have point symmetries, and, separately, shape symmetries?
 // Yes I believe so, because shape symmetries can be "broken", right?
@@ -171,6 +177,12 @@ type pos = {
   y: float,
 };
 
+type ccirclePart = {
+  to_: pos,
+  r: float,
+  sweep: bool,
+};
+
 type concreteShape =
   | CLine({
       p1: pos,
@@ -179,7 +191,28 @@ type concreteShape =
   | CCircle({
       center: pos,
       r: float,
+    })
+  | CCirclePart({
+      center: pos,
+      r: float,
+      theta0: float,
+      theta1: float,
     });
+// | CPoly({
+//     p0: pos,
+//     items: list([ | `Line(pos) | `Arc(ccirclePart)]),
+//   });
+
+type lineOpts = {
+  p1: reference,
+  p2: reference,
+};
+type circlePartOpts = {
+  // always clockwise, folks.
+  center: reference,
+  onEdge: reference,
+  goUntil: reference,
+};
 
 type shapeKind =
   //   | Point(string)
@@ -190,7 +223,15 @@ type shapeKind =
   | Circle({
       center: reference,
       onEdge: reference,
+    })
+  | CirclePart({
+      // always clockwise, folks.
+      center: reference,
+      onEdge: reference,
+      goUntil: reference,
     });
+// | Poly(list([ | `Line(lineOpts) | `CirclePart(circlePartOpts)]));
+
 //   | Arc({
 //       p1: string,
 //       p2: string,
@@ -234,23 +275,67 @@ type shapeKind =
 // };
 
 type selection =
-  | Point(string)
-  | Shape(string);
+  | Points(list(reference))
+  | Shapes(list(reference))
+  | Tiles(list(reference));
 
+type hover = [ | `Point(reference) | `Shape(reference)];
 // type selection = {
 //   kind: kindSelection,
 //   sym: symmetrySelection,
 // };
 
+type tile = {
+  color: string,
+  margin: float,
+  order: float,
+  sides: list(reference),
+  sym: option(symm),
+};
+
+type point = {
+  pos: pointPos,
+  sym: option(symm),
+};
+type shape = {
+  kind: shapeKind,
+  sym: option(symm),
+  color: option(string),
+};
+
 type points = Belt.Map.String.t(point);
-type symmetries = Belt.Map.String.t(symm);
+// type symmetries = Belt.Map.String.t(symm);
 type positions = Hashtbl.t(string, pos);
-type shapes = Belt.Map.String.t(shapeKind);
-type shapeSymmetries = Belt.Map.String.t(shapeSymm);
+type shapes = Belt.Map.String.t(shape);
+type tiles = Belt.Map.String.t(tile);
+// type shapeSymmetries = Belt.Map.String.t(shapeSymm);
+
+type transform = {
+  zoom: float,
+  center: pos,
+};
+
+type presentation = {
+  points: bool,
+  traces: bool,
+  transform,
+};
+
+let defaultPresentation = {
+  points: true,
+  traces: true,
+  transform: {
+    zoom: 1.0,
+    center: {
+      x: 0.,
+      y: 0.,
+    },
+  },
+};
 
 type scene = {
   points,
-  symmetries,
   shapes,
-  shapeSymmetries,
+  tiles,
+  presentation,
 };

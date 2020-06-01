@@ -13,6 +13,10 @@
 - place between 2 points (can edit percent)
 - place arc from one around another (can edit theta)
 
+- place line (select point, then another point)
+- place circle (select center, then outer)
+- place arc (select center, then p1, then p2) - clockwise maybe?
+
 ## Buut what if I want symmetries to compound?
 
 I think dots probably should compound.
