@@ -2,16 +2,26 @@ open Types;
 module S = Belt.Map.String;
 
 module ColorPicker = {
-  let rawColors = "fbb4aeb3cde3ccebc5decbe4fed9a6ffffcce5d8bdfddaecf2f2f2";
-  let rec loop = raw =>
+  let rec parseColors = raw =>
     if (raw == "") {
       [];
     } else {
       let chunk = Js.String.slice(~from=0, ~to_=6, raw);
       let rest = Js.String.sliceToEnd(~from=6, raw);
-      ["#" ++ chunk, ...loop(rest)];
+      ["#" ++ chunk, ...parseColors(rest)];
     };
-  let colors = loop(rawColors)->Belt.List.toArray;
+  let sets =
+    [
+      "e41a1c377eb84daf4a984ea3ff7f00ffff33a65628f781bf999999",
+      "66c2a5fc8d628da0cbe78ac3a6d854ffd92fe5c494b3b3b3",
+      "8dd3c7ffffb3bebadafb807280b1d3fdb462b3de69fccde5d9d9d9bc80bdccebc5ffed6f",
+      "fbb4aeb3cde3ccebc5decbe4fed9a6ffffcce5d8bdfddaecf2f2f2",
+      "b3e2cdfdcdaccbd5e8f4cae4e6f5c9fff2aef1e2cccccccc",
+      "7fc97fbeaed4fdc086ffff99386cb0f0027fbf5b17666666",
+      "1b9e77d95f027570b3e7298a66a61ee6ab02a6761d666666",
+    ]
+    ->Belt.List.map(parseColors);
+  // let colors = parseColors(pastels)->Belt.List.toArray;
 
   [@react.component]
   let make = (~onPick) => {
@@ -23,24 +33,36 @@ module ColorPicker = {
       </button>
       {open_
          ? <div>
-             {colors
-              ->Belt.Array.map(hex =>
-                  <button
-                    onClick={_ => {
-                      onPick(hex);
-                      setOpen(_ => false);
-                    }}
-                    style={ReactDOMRe.Style.make(~backgroundColor=hex, ())}
-                    className=Css.(
-                      style([
-                        width(px(20)),
-                        height(px(20)),
-                        borderStyle(`none),
-                        cursor(`pointer),
-                      ])
-                    )
-                  />
-                )
+             {sets
+              ->Belt.List.toArray
+              ->Belt.Array.map(set => {
+                  <div>
+                    {set
+                     ->Belt.List.toArray
+                     ->Belt.Array.map(hex =>
+                         <button
+                           key=hex
+                           onClick={_ => {
+                             onPick(hex);
+                             setOpen(_ => false);
+                           }}
+                           style={ReactDOMRe.Style.make(
+                             ~backgroundColor=hex,
+                             (),
+                           )}
+                           className=Css.(
+                             style([
+                               width(px(20)),
+                               height(px(20)),
+                               borderStyle(`none),
+                               cursor(`pointer),
+                             ])
+                           )
+                         />
+                       )
+                     ->React.array}
+                  </div>
+                })
               ->React.array}
            </div>
          : React.null}
