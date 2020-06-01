@@ -267,6 +267,18 @@ let isShapeSelected = (selection, r) =>
   | _ => false
   };
 
+let isTileSelected = (selection, r) =>
+  switch (selection) {
+  | Some(Tiles(tiles)) => tiles->Belt.List.has(r, (==))
+  | _ => false
+  };
+
+let isTileSelectedOrHovered = (selection, r) =>
+  switch (selection) {
+  | Some(Tiles(tiles)) => tiles->Belt.List.some(s => s.id == r.id)
+  | _ => false
+  };
+
 let isShapeHovered = (selection, r) =>
   switch (selection) {
   | Some(Shapes(shapes)) => shapes->Belt.List.some(s => s.id == r.id)
@@ -292,6 +304,7 @@ let make =
       ~selection: option(selection),
       ~selectPoint: reference => unit,
       ~selectShape: reference => unit,
+      ~selectTile: reference => unit,
     ) => {
   let (_positions, points, shapes, tiles) =
     React.useMemo1(
@@ -328,6 +341,16 @@ let make =
              key={toId(k)}
              fill=color
              d={polyPath(transform, sides, margin)}
+             onClick={_ => selectTile(k)}
+             stroke={isTileSelected(selection, k) ? "black" : "green"}
+             strokeWidth={isTileSelectedOrHovered(selection, k) ? "3" : "0"}
+             className=Css.(
+               style([
+                 cursor(`pointer),
+                 //  hover([
+                 //  ])
+               ])
+             )
            />
          })
        ->React.array}

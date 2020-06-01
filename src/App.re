@@ -68,6 +68,23 @@ let reduce = (state, action) => {
         },
       },
     }
+  | `SelectTile(reference) => {
+      ...state,
+      selection:
+        Some(
+          Tiles(
+            switch (state.selection) {
+            | Some(Tiles(p)) =>
+              if (p->Belt.List.has(reference, (==))) {
+                p->Belt.List.keep(k => k != reference);
+              } else {
+                [reference, ...p];
+              }
+            | _ => [reference]
+            },
+          ),
+        ),
+    }
   | `SelectShape(reference) => {
       ...state,
       selection:
@@ -129,6 +146,7 @@ let make = (~initial) => {
         selection={state.selection}
         selectPoint={res => dispatch(`SelectPoint(res))}
         selectShape={res => dispatch(`SelectShape(res))}
+        selectTile={res => dispatch(`SelectTile(res))}
       />
       <Controls
         selection={state.selection}
@@ -215,6 +233,7 @@ let make = (~initial) => {
         selection={state.selection}
         selectPoint={res => dispatch(`SelectPoint(res))}
         selectShape={res => dispatch(`SelectShape(res))}
+        selectTile={res => dispatch(`SelectTile(res))}
         setHovered={s => dispatch(`SetHover(s))}
         setScene={s => dispatch(`SetScene(s))}
         setSelection={s => dispatch(`SetSelection(s))}

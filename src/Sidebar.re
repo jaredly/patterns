@@ -50,14 +50,35 @@ module ColorPicker = {
 
 module Tiles = {
   [@react.component]
-  let make = (~scene, ~selection, ~setSelection, ~setHovered, ~setScene) => {
-    <React.Fragment>
+  let make =
+      (~scene, ~selection, ~selectTile, ~setSelection, ~setHovered, ~setScene) => {
+    <div className=Css.(style([padding(px(2))]))>
       {scene.tiles
        ->S.toArray
        ->Belt.Array.map(((k, tile)) => {
-           <div>
-             <div> {React.string("Tile")} </div>
-             <div>
+           let isSelected =
+             switch (selection) {
+             | Some(Tiles(s)) when s->Belt.List.some(s => s.id == k) => true
+             | _ => false
+             };
+           <div
+             key=k
+             className=Css.(
+               style(
+                 isSelected ? [outline(px(2), `solid, hex("f0a"))] : [],
+               )
+             )>
+             <div
+               onClick={_ => selectTile({id: k, index: 0})}
+               className=Css.(
+                 style([
+                   cursor(`pointer),
+                   padding(px(4)),
+                   display(`flex),
+                   alignItems(`center),
+                   hover([backgroundColor(hex("eee"))]),
+                 ])
+               )>
                <div
                  style={ReactDOMRe.Style.make(
                    ~backgroundColor=tile.color,
@@ -67,89 +88,102 @@ module Tiles = {
                    style([
                      width(px(20)),
                      height(px(20)),
+                     marginRight(px(4)),
                      display(`inlineBlock),
                    ])
                  )
                />
-               <input
-                 value={tile.color}
-                 onChange={evt => {
-                   let color = evt->ReactEvent.Form.target##value;
-                   setScene({
-                     ...scene,
-                     tiles:
-                       scene.tiles->Belt.Map.String.set(k, {...tile, color}),
-                   });
-                 }}
-               />
-               <ColorPicker
-                 onPick={color =>
-                   setScene({
-                     ...scene,
-                     tiles:
-                       scene.tiles->Belt.Map.String.set(k, {...tile, color}),
-                   })
-                 }
-               />
+               {React.string("Tile")}
              </div>
-             <div>
-               {React.string("Margin: ")}
-               <input
-                 value={tile.margin->Js.Float.toString}
-                 onChange={evt => {
-                   let margin =
-                     evt->ReactEvent.Form.target##value->Js.Float.fromString;
-                   setScene({
-                     ...scene,
-                     tiles:
-                       scene.tiles
-                       ->Belt.Map.String.set(k, {...tile, margin}),
-                   });
-                 }}
-               />
-             </div>
-             <div>
-               {React.string("Order: ")}
-               <input
-                 value={tile.order->Js.Float.toString}
-                 onChange={evt => {
-                   let order =
-                     evt->ReactEvent.Form.target##value->Js.Float.fromString;
-                   setScene({
-                     ...scene,
-                     tiles:
-                       scene.tiles->Belt.Map.String.set(k, {...tile, order}),
-                   });
-                 }}
-               />
-             </div>
-             <div>
-               {React.string("Symmetry: ")}
-               {switch (tile.sym) {
-                | None => React.null
-                | Some(sym) =>
-                  <input
-                    value={string_of_int(sym.count)}
-                    onChange={evt => {
-                      let value = evt->ReactEvent.Form.target##value;
-                      let count = int_of_string(value);
-                      setScene({
-                        ...scene,
-                        tiles:
-                          scene.tiles
-                          ->Belt.Map.String.set(
-                              k,
-                              {...tile, sym: Some({...sym, count})},
-                            ),
-                      });
-                    }}
-                  />
-                }}
-             </div>
-           </div>
+             {isSelected
+                ? <React.Fragment>
+                    <div>
+                      <input
+                        value={tile.color}
+                        onChange={evt => {
+                          let color = evt->ReactEvent.Form.target##value;
+                          setScene({
+                            ...scene,
+                            tiles:
+                              scene.tiles
+                              ->Belt.Map.String.set(k, {...tile, color}),
+                          });
+                        }}
+                      />
+                      <ColorPicker
+                        onPick={color =>
+                          setScene({
+                            ...scene,
+                            tiles:
+                              scene.tiles
+                              ->Belt.Map.String.set(k, {...tile, color}),
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      {React.string("Margin: ")}
+                      <input
+                        value={tile.margin->Js.Float.toString}
+                        onChange={evt => {
+                          let margin =
+                            evt->ReactEvent.Form.target##value
+                            ->Js.Float.fromString;
+                          setScene({
+                            ...scene,
+                            tiles:
+                              scene.tiles
+                              ->Belt.Map.String.set(k, {...tile, margin}),
+                          });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      {React.string("Order: ")}
+                      <input
+                        value={tile.order->Js.Float.toString}
+                        onChange={evt => {
+                          let order =
+                            evt->ReactEvent.Form.target##value
+                            ->Js.Float.fromString;
+                          setScene({
+                            ...scene,
+                            tiles:
+                              scene.tiles
+                              ->Belt.Map.String.set(k, {...tile, order}),
+                          });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      {React.string("Symmetry: ")}
+                      {switch (tile.sym) {
+                       | None => React.null
+                       | Some(sym) =>
+                         <input
+                           value={string_of_int(sym.count)}
+                           onChange={evt => {
+                             let value = evt->ReactEvent.Form.target##value;
+                             let count = int_of_string(value);
+                             setScene({
+                               ...scene,
+                               tiles:
+                                 scene.tiles
+                                 ->Belt.Map.String.set(
+                                     k,
+                                     {...tile, sym: Some({...sym, count})},
+                                   ),
+                             });
+                           }}
+                         />
+                       }}
+                    </div>
+                  </React.Fragment>
+                : React.null}
+           </div>;
          })
        ->React.array}
-    </React.Fragment>;
+    </div>;
   };
 };
 
@@ -217,13 +251,7 @@ module Shapes = {
              onMouseOver={_ => setHovered(Some(`Shape({id: k, index: 0})))}
              onMouseOut={_ => setHovered(None)}>
              <div
-               onClick={_ =>
-                 //  if (isSelected) {
-                 //    setSelection(None);
-                 //  } else {
-                 //    setSelection(Some(Shapes([{id: k, index: 0}])));
-                 //  }
-                 selectShape({id: k, index: 0})}
+               onClick={_ => selectShape({id: k, index: 0})}
                style={ReactDOMRe.Style.make(
                  ~borderColor=
                    switch (shape.color) {
@@ -324,6 +352,7 @@ let make =
       ~selection,
       ~selectPoint,
       ~selectShape,
+      ~selectTile,
       ~setScene,
       ~setSelection,
       ~setHovered,
@@ -340,7 +369,7 @@ let make =
       className=Css.(
         style([flex(`num(1.)), minHeight(`px(0)), overflow(`auto)])
       )>
-      <Tiles scene selection setScene setSelection setHovered />
+      <Tiles scene selection setScene setSelection setHovered selectTile />
     </div>
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
