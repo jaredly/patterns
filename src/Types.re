@@ -197,7 +197,8 @@ type concreteShape =
       r: float,
       theta0: float,
       theta1: float,
-    });
+      clockwise: bool,
+    }); // t0 to t1 is "start to end", but we need to know if we're going clockwise or counterclockwise... I think
 // | CPoly({
 //     p0: pos,
 //     items: list([ | `Line(pos) | `Arc(ccirclePart)]),

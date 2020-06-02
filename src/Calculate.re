@@ -36,13 +36,16 @@ let flip = shape =>
   switch (shape) {
   | CLine({p1, p2}) => CLine({p1: p2, p2: p1})
   | CCircle(_) => shape
-  | CCirclePart({center, r, theta0, theta1}) =>
+  | CCirclePart({center, r, theta0, theta1, clockwise}) =>
     CCirclePart({
       center,
       r,
-      // TODO verify this...
-      theta0: theta1 -. Js.Math._PI *. 2.,
+      theta0: theta1,
       theta1: theta0,
+      clockwise: !clockwise,
+      // TODO verify this...
+      // theta0: theta1 -. Js.Math._PI *. 2.,
+      // theta1: theta0,
     })
   };
 
@@ -291,14 +294,7 @@ let calculateShape = (shape: shapeKind, scene: scene, positions: positions) =>
     let r = dist(dpos(c, onEdge));
     let theta0 = angleTo(dpos(c, onEdge));
     let theta1 = angleTo(dpos(c, goUntil));
-    CCirclePart({center: c, r, theta0, theta1});
-  // | Poly(_items) => CCircle({
-  //                      center: {
-  //                        x: 100.0,
-  //                        y: 100.0,
-  //                      },
-  //                      r: 50.,
-  //                    })
+    CCirclePart({center: c, r, theta0, theta1, clockwise: true});
   };
 
 let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
@@ -310,25 +306,14 @@ let rotateShape = (shape: concreteShape, center: pos, theta: float) => {
     })
   | CCircle({center: ccenter, r}) =>
     CCircle({center: rotateAround(ccenter, center, theta), r})
-  | CCirclePart({center: ccenter, r, theta0, theta1}) =>
+  | CCirclePart({center: ccenter, r, theta0, theta1, clockwise}) =>
     CCirclePart({
       center: rotateAround(ccenter, center, theta),
       r,
       theta0: theta0 +. theta,
       theta1: theta1 +. theta,
+      clockwise,
     })
-  // | CPoly({p0, items}) =>
-  //   CPoly({
-  //     p0: rotateAround(p0, center, theta),
-  //     items:
-  //       items->Belt.List.map(item =>
-  //         switch (item) {
-  //         | `Line(pos) => `Line(rotateAround(pos, center, theta))
-  //         | `Arc({to_, r, sweep}) =>
-  //           `Arc({to_: rotateAround(to_, center, theta), r, sweep})
-  //         }
-  //       ),
-  //   })
   };
 };
 
@@ -445,21 +430,6 @@ let calculateAllPositions = scene => {
   (positions, points, shapes, calculateTiles(scene, positions));
 };
 
-/**  ok */;
-// let line = (p1, p2, scene, positions) => {
-//   let p1 = resolvePoint(p1, scene, positions);
-//   let p2 = resolvePoint(p2, scene, positions);
-//   (x1, y1, x2, y2);
-// };
-
-// let circle = (center, onEdge, scene, positions) => {
-//   let (cx, cy) = resolvePoint(center, scene, positions);
-//   let onEdge = resolvePoint(onEdge, scene, positions);
-
-//   let r = dist(dpos((cx, cy), onEdge));
-//   (cx, cy, r);
-// };
-
 let toDegrees = rads => rads /. Js.Math._PI *. 180.;
 let insideAngle = angle =>
   if (angle > Js.Math._PI) {
@@ -470,6 +440,7 @@ let insideAngle = angle =>
     angle;
   };
 
+/** Determine if we're going clockwise or counterclockwise */
 let getWind = ordered => {
   let ln = Array.length(ordered);
   let angles =
@@ -477,37 +448,58 @@ let getWind = ordered => {
       let (p1, p2) = endPoints(shape);
       angleTo(dpos(p1, p2));
     });
-  // Js.log2("angles", angles->Belt.Array.map(toDegrees));
   let diffs =
     angles->Belt.Array.mapWithIndex((i, angle) => {
       let prev = angles[i == 0 ? ln - 1 : i - 1];
       insideAngle(angle -. prev);
     });
-  // Js.log2("diffs", diffs->Belt.Array.map(toDegrees));
-  // Js.log2(
-  //   "diff2",
-  //   diffs->Belt.Array.map(insideAngle)->Belt.Array.map(toDegrees),
-  // );
   let totalWind = diffs->Belt.Array.reduce(0., (+.));
-  // let (totalWind, _) =
-  //   angles->Belt.Array.reduce(
-  //     (0., 0),
-  //     ((sum, i), theta) => {
-  //       let prev = angles[i == 0 ? ln - 1 : i - 1];
-  //       (sum +. insideAngle(theta -. prev), i + 1);
-  //     },
-  //   );
-  // Js.log2("Total Wind", totalWind);
   totalWind;
 };
 
-// let lineCollide = (ap1, ap2, bp1, bp2) => {
+let normalizeTheta = t => t < -. pi ? t +. tau : t > pi ? t -. tau : t;
 
-// }
+let angleDiff = (one, two) => {
+  abs_float(normalizeTheta(one) -. normalizeTheta(two));
+};
 
+/** Find the point between the end of "prev" and the start of "next". For lines,
+ * there's only ever one point of intersection, but if we've got arcs or circles
+ * involved, there are two and we need to know which one.
+ */
 let collideEndToEnd = (prev, next) => {
   switch (prev, next) {
   | (CLine(l1), CLine(l2)) => intersection(l1.p1, l1.p2, l2.p1, l2.p2)
+  | (CLine(l1), CCirclePart({center, r, theta0})) =>
+    let points = lineCircle(center, r, l1.p1, l1.p2);
+    switch (points) {
+    | [] => None
+    | [p] => Some(p)
+    | [p1, p2] =>
+      let t1 = angleTo(dpos(center, p1));
+      let t2 = angleTo(dpos(center, p2));
+      if (angleDiff(theta0, t1) < angleDiff(theta0, t2)) {
+        Some(p1);
+      } else {
+        Some(p2);
+      };
+    | _ => None
+    };
+  | (CCirclePart({center, r, theta1}), CLine(l1)) =>
+    let points = lineCircle(center, r, l1.p1, l1.p2);
+    switch (points) {
+    | [] => None
+    | [p] => Some(p)
+    | [p1, p2] =>
+      let t1 = angleTo(dpos(center, p1));
+      let t2 = angleTo(dpos(center, p2));
+      if (angleDiff(theta1, t1) < angleDiff(theta1, t2)) {
+        Some(p1);
+      } else {
+        Some(p2);
+      };
+    | _ => None
+    };
   | _ => None
   };
 };
@@ -573,6 +565,9 @@ let inset = (ordered, margin) => {
           p1: push(p1, ~theta, ~mag=margin),
           p2: push(p2, ~theta, ~mag=margin),
         });
+      // erg there's definitely a case where I want the radius to increase.
+      // if the way we're going is the opposite of the clockwised-ness of the arc, I think.
+      | CCirclePart(c1) => CCirclePart({...c1, r: c1.r -. margin})
       | x => x
       }
     );
@@ -582,6 +577,40 @@ let inset = (ordered, margin) => {
       let next = collideEndToEnd(shape, pushed[i == ln - 1 ? 0 : i + 1]);
       switch (shape) {
       | CLine({p1, p2}) => CLine({p1: prev |? p1, p2: next |? p2})
+      | CCirclePart(c1) =>
+        let theta0 =
+          switch (prev) {
+          | Some(p) => angleTo(dpos(c1.center, p))
+          | None => c1.theta0
+          };
+        let theta1 =
+          switch (next) {
+          | Some(p) => angleTo(dpos(c1.center, p))
+          | None => c1.theta1
+          };
+
+        // ***********
+        // START HERE
+        // ***********
+        // In order for this to work, I need to un-normalize this (it's currently normalized)
+        // and the start wasn't normalized, so we're getting all weird.
+        // e.g. if theta1 was larger than theta0, it needs to be after.
+
+        // Sooo clooose -- it looks like collideEndToEnd is picking the wrong one in the one case.
+        let theta1 =
+          if (c1.theta1 > c1.theta0) {
+            if (theta1 > theta0) {
+              theta1;
+            } else {
+              theta1 +. tau;
+            };
+          } else if (theta1 > theta0) {
+            theta1 -. tau;
+          } else {
+            theta1;
+          };
+
+        CCirclePart({...c1, theta0, theta1});
       | x => x
       };
     });
@@ -646,6 +675,22 @@ let potentials = (scene: scene, selection: option(selection), positions) =>
           pos: Line({source: p1, dest: p2, percentOrAbs: Percent(2.)}),
         }),
       ];
+    | Some(Points([p3, p2, p1])) =>
+      let {pos: _, sym} = Belt.Map.String.getExn(scene.points, p1.id);
+      let {pos: _, sym: sym2} = Belt.Map.String.getExn(scene.points, p2.id);
+      let {pos: _, sym: sym3} = Belt.Map.String.getExn(scene.points, p3.id);
+      let sym = bestSym(bestSym(sym, sym2), sym3);
+      [
+        `Point({
+          sym,
+          pos: RotateBetween({one: p1, middle: p2, two: p3, amount: 0.5}),
+        }),
+        `Shape({
+          color: None,
+          sym,
+          kind: CirclePart({center: p2, onEdge: p1, goUntil: p3}),
+        }),
+      ];
     | Some(Shapes(shapes)) =>
       let found =
         shapes->Belt.List.map(r =>
@@ -655,51 +700,61 @@ let potentials = (scene: scene, selection: option(selection), positions) =>
             resolveShape(scene, r, positions),
           )
         );
-      found
-      ->Belt.List.map(((r, shape, concrete)) => {
-          switch (concrete) {
-          | CLine({p1, p2}) => [
-              `Point({
-                sym: shape.sym,
-                pos:
-                  Abs({
-                    x: p1.x +. (p2.x -. p1.x) /. 2.,
-                    y: p1.y +. (p2.y -. p1.y) /. 2.,
-                  }),
+      // found
+      // ->Belt.List.map(((r, shape, concrete)) => {
+      //     switch (concrete) {
+      //     | CLine({p1, p2}) => [
+      //         `Point({
+      //           sym: shape.sym,
+      //           pos:
+      //             Abs({
+      //               x: p1.x +. (p2.x -. p1.x) /. 2.,
+      //               y: p1.y +. (p2.y -. p1.y) /. 2.,
+      //             }),
+      //         }),
+      //       ]
+      //     | _ => []
+      //     }
+      //   })
+      // ->Belt.List.toArray
+      // ->Belt.List.concatMany @
+      switch (found) {
+      | [(_, shape, CLine({p1, p2}))] => [
+          `Point({
+            sym: shape.sym,
+            pos:
+              Abs({
+                x: p1.x +. (p2.x -. p1.x) /. 2.,
+                y: p1.y +. (p2.y -. p1.y) /. 2.,
               }),
-            ]
-          | _ => []
-          }
-        })
-      ->Belt.List.toArray
-      ->Belt.List.concatMany
-      @ (
-        switch (found) {
-        | [(_, s1, CLine(l1)), (_, s2, CLine(l2))] =>
-          let cross = intersection(l1.p1, l1.p2, l2.p1, l2.p2);
-          switch (cross) {
-          | None => []
-          | Some(cross) => [
-              `Point({
-                sym: bestSym(s1.sym, s2.sym),
-                pos: Abs({x: cross.x, y: cross.y}),
-              }),
-            ]
-          };
-        | [(_, sl, CLine(l1)), (_, sc, CCircle(c1))]
-        | [(_, sc, CCircle(c1)), (_, sl, CLine(l1))] =>
-          let crosses = lineCircle(c1.center, c1.r, l1.p1, l1.p2);
-          let sym = bestSym(sl.sym, sc.sym);
-          crosses->Belt.List.map(point => {
-            `Point
-              ({sym, pos: Abs({x: point.x, y: point.y})})
-              // (scene, [{id, index: 0}, ...ids]);
-              //   scene->Api.Point.abs(~sym, point.x, point.y);
-              // let (scene, id) =
-          });
-        | _ => []
-        }
-      );
+          }),
+        ]
+      | [(_, s1, CLine(l1)), (_, s2, CLine(l2))] =>
+        let cross = intersection(l1.p1, l1.p2, l2.p1, l2.p2);
+        switch (cross) {
+        | None => []
+        | Some(cross) => [
+            `Point({
+              sym: bestSym(s1.sym, s2.sym),
+              pos: Abs({x: cross.x, y: cross.y}),
+            }),
+          ]
+        };
+      | [(_, s1, CCircle(c1)), (_, s2, CCircle(c2))] =>
+        let cross = intersectCircles(c1.center, c1.r, c2.center, c2.r);
+        let sym = bestSym(s1.sym, s2.sym);
+        cross->Belt.List.map(point => {
+          `Point({sym, pos: Abs({x: point.x, y: point.y})})
+        });
+      | [(_, sl, CLine(l1)), (_, sc, CCircle(c1))]
+      | [(_, sc, CCircle(c1)), (_, sl, CLine(l1))] =>
+        let crosses = lineCircle(c1.center, c1.r, l1.p1, l1.p2);
+        let sym = bestSym(sl.sym, sc.sym);
+        crosses->Belt.List.map(point => {
+          `Point({sym, pos: Abs({x: point.x, y: point.y})})
+        });
+      | _ => []
+      };
     // Oooh here we get to a tricky bit, so lets skip it.
     // shapes
     // ->Belt.List.keepMap(r =>

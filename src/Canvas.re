@@ -110,16 +110,18 @@ let polyPath = (transform, items, margin) => {
             tx(p2.x, transform),
             ty(p2.y, transform),
           )
-        | CCirclePart({r, theta0, theta1}) =>
+        | CCirclePart({r, theta0, theta1, clockwise}) =>
           let sweep = normalizeTheta(theta1 -. theta0) > Js.Math._PI;
+          let sweep = clockwise ? sweep : !sweep;
           Printf.sprintf(
             {|A %0.2f %0.2f
           0
-          %d 1
+          %d %d
           %0.2f %0.2f|},
             tf(r, transform),
             tf(r, transform),
             sweep ? 1 : 0,
+            clockwise ? 1 : 0,
             tx(endp.x, transform),
             ty(endp.y, transform),
           );
@@ -178,7 +180,7 @@ module Shape = {
       //     style
       //     stroke
       //   />
-      | CCirclePart({center, r, theta0, theta1}) =>
+      | CCirclePart({center, r, theta0, theta1, clockwise}) =>
         let start = {
           x: center.x +. cos(theta0) *. r,
           y: center.y +. sin(theta0) *. r,
@@ -187,6 +189,8 @@ module Shape = {
           x: center.x +. cos(theta1) *. r,
           y: center.y +. sin(theta1) *. r,
         };
+        let sweep = normalizeTheta(theta1 -. theta0) > Js.Math._PI;
+        let sweep = clockwise ? sweep : !sweep;
         <path
           className
           d={Printf.sprintf(
@@ -199,7 +203,7 @@ module Shape = {
             ty(start.y, transform),
             tf(r, transform),
             tf(r, transform),
-            normalizeTheta(theta1 -. theta0) > Js.Math._PI ? 1 : 0,
+            sweep ? 1 : 0,
             tx(endd.x, transform),
             ty(endd.y, transform),
           )}
@@ -222,7 +226,12 @@ module Shape = {
           transform
           className=Css.(
             isSelected
-              ? ""
+              ? style([
+                  hover([
+                    unsafe("stroke-width", "7"),
+                    unsafe("stroke", "rgba(100, 220, 255, 1.0)"),
+                  ]),
+                ])
               : style([
                   hover([unsafe("stroke", "rgba(100, 220, 255, 0.5)")]),
                 ])
@@ -305,6 +314,7 @@ module Point = {
       fill="rgba(255,255,255,0.2)"
       stroke="rgba(0,0,0,0.5)"
       strokeWidth={isSelected || isHovered ? "3" : "1"}
+      className=Css.(style([hover([unsafe("stroke-width", "5")])]))
       //  strokeWidth={isSelected(selection, k) ? "3" : "0"}
       style={ReactDOMRe.Style.make(~cursor="pointer", ())}
     />;
