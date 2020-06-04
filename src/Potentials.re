@@ -3,10 +3,11 @@ open Calculate;
 
 module S = Belt.Map.String;
 
-let potentials = (scene: scene, selection: option(selection), positions) =>
+let potentials = (scene: scene, selection: selection, positions) =>
   (
     switch (selection) {
-    | Some(Points([p2, p1])) =>
+    | {points: [], tiles: [], shapes: []} => []
+    | {points: [p2, p1], tiles: [], shapes: []} =>
       let {pos: _, sym} = S.getExn(scene.points, p1.id);
       let {pos: _, sym: sym2} = S.getExn(scene.points, p2.id);
       let sym = bestSym(sym, sym2);
@@ -23,7 +24,7 @@ let potentials = (scene: scene, selection: option(selection), positions) =>
         }),
         `Point({sym, pos: Rotate({source: p1, dest: p2, theta: pi /. 2.})}),
       ];
-    | Some(Points([p3, p2, p1])) =>
+    | {points: [p3, p2, p1], tiles: [], shapes: []} =>
       let {pos: _, sym} = S.getExn(scene.points, p1.id);
       let {pos: _, sym: sym2} = S.getExn(scene.points, p2.id);
       let {pos: _, sym: sym3} = S.getExn(scene.points, p3.id);
@@ -39,7 +40,7 @@ let potentials = (scene: scene, selection: option(selection), positions) =>
           kind: CirclePart({center: p2, onEdge: p1, goUntil: p3}),
         }),
       ];
-    | Some(Shapes(shapes)) =>
+    | {tiles: [], shapes, points: []} =>
       let found =
         shapes->Belt.List.map(r =>
           (

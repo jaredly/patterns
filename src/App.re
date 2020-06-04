@@ -11,14 +11,16 @@ let scene = {
 
 type state = {
   id: option(string),
-  hover: option([ | `Point(Types.reference) | `Shape(Types.reference)]),
+  hover: option(Types.hover),
   // showPoints: bool,
   // showTraces: bool,
   scene: Types.scene,
   svgRef: React.ref(Js.Nullable.t(Dom.element)),
-  selection: option(Types.selection),
+  selection: Types.selection,
   history: list(Types.scene),
 };
+
+let emptySelection: Types.selection = {tiles: [], shapes: [], points: []};
 
 // let (id, scene) = Controls.getInitial(scene);
 let loadInitial = () => {
@@ -33,7 +35,7 @@ let loadInitial = () => {
            current: Js.Nullable.null,
          },
          scene,
-         selection: None,
+         selection: emptySelection,
          history: [],
        })
      });
@@ -46,7 +48,12 @@ let reduce = (state, action) => {
   | `Undo =>
     switch (state.history) {
     | [] => state
-    | [scene, ...history] => {...state, scene, history, selection: None}
+    | [scene, ...history] => {
+        ...state,
+        scene,
+        history,
+        selection: emptySelection,
+      }
     }
   | `TogglePoints => {
       ...state,
@@ -70,50 +77,39 @@ let reduce = (state, action) => {
     }
   | `SelectTile(reference) => {
       ...state,
-      selection:
-        Some(
-          Tiles(
-            switch (state.selection) {
-            | Some(Tiles(p)) =>
-              if (p->Belt.List.has(reference, (==))) {
-                p->Belt.List.keep(k => k != reference);
-              } else {
-                [reference, ...p];
-              }
-            | _ => [reference]
-            },
-          ),
-        ),
+      selection: {
+        ...state.selection,
+        tiles:
+          if (state.selection.tiles->Belt.List.has(reference, (==))) {
+            state.selection.tiles->Belt.List.keep(k => k != reference);
+          } else {
+            [reference, ...state.selection.tiles];
+          },
+      },
     }
   | `SelectShape(reference) => {
       ...state,
-      selection:
-        Some(
-          Shapes(
-            switch (state.selection) {
-            | Some(Shapes(p)) =>
-              if (p->Belt.List.has(reference, (==))) {
-                p->Belt.List.keep(k => k != reference);
-              } else {
-                [reference, ...p];
-              }
-            | _ => [reference]
-            },
-          ),
-        ),
+      selection: {
+        ...state.selection,
+        shapes:
+          if (state.selection.shapes->Belt.List.has(reference, (==))) {
+            state.selection.shapes->Belt.List.keep(k => k != reference);
+          } else {
+            [reference, ...state.selection.shapes];
+          },
+      },
     }
   | `SelectPoint(reference) => {
       ...state,
-      selection:
-        switch (state.selection) {
-        | Some(Points(p)) =>
-          if (p->Belt.List.has(reference, (==))) {
-            Some(Points(p->Belt.List.keep(k => k != reference)));
+      selection: {
+        ...state.selection,
+        points:
+          if (state.selection.points->Belt.List.has(reference, (==))) {
+            state.selection.points->Belt.List.keep(k => k != reference);
           } else {
-            Some(Points([reference, ...p]));
-          }
-        | _ => Some(Points([reference]))
-        },
+            [reference, ...state.selection.points];
+          },
+      },
     }
   | `SetSelection(selection) => {...state, selection}
   | `SetScene(scene) => {

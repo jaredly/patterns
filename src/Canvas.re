@@ -11,6 +11,12 @@ open Types;
 //     }
 // }
 
+module Colors = {
+  let selected = "rgba(0, 255, 0, 1.0)";
+  let hovered = "#555";
+  let creating = "magenta";
+};
+
 let tx = (x, transform) => (x -. transform.center.x) *. transform.zoom;
 let ty = (y, transform) => (y -. transform.center.x) *. transform.zoom;
 let tf = (f, transform) => f *. transform.zoom;
@@ -228,33 +234,46 @@ module Shape = {
             isSelected
               ? style([
                   hover([
-                    unsafe("stroke-width", "7"),
-                    unsafe("stroke", "rgba(100, 220, 255, 1.0)"),
+                    unsafe("stroke-width", "8"),
+                    unsafe("stroke", "rgb(0, 200, 0)"),
                   ]),
                 ])
               : style([
-                  hover([unsafe("stroke", "rgba(100, 220, 255, 0.5)")]),
+                  hover([
+                    unsafe(
+                      "stroke",
+                      isHovered ? "rgb(50, 180, 230" : "rgb(100, 220, 255)",
+                    ),
+                  ]),
                 ])
           )
           onClick={_ => onSelect()}
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
-          strokeWidth="4"
+          strokeWidth="6"
           stroke={
             isSelected
-              ? "rgba(0, 255, 0, 0.5)"
-              : isHovered ? "rgba(100, 220, 255, 0.25)" : "rgba(0,0,0,0)"
+              ? "rgb(0, 255, 0)"
+              : isHovered ? "rgba(100, 220, 255)" : "rgba(0,0,0,0)"
           }
         />
         <Inner
           shape
           transform
           onClick={_ => ()}
-          className=Css.(style([pointerEvents(`none)]))
+          className=Css.(
+            style(
+              [
+                pointerEvents(`none),
+                opacity(isHovered || isSelected ? 1. : 0.5),
+              ]
+              @ (isHovered ? [unsafe("stroke-dasharray", "3")] : []),
+            )
+          )
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
-          strokeWidth="1"
+          strokeWidth={isSelected ? "4" : "2"}
           stroke={
             switch (color) {
-            | None => "rgba(255, 0, 255, 0.1)"
+            | None => "rgb(255, 0, 255)"
             | Some(c) => c
             }
           }
@@ -270,35 +289,20 @@ let tblList = tbl => {
 
 let toId = ({id, index}) => id ++ "_" ++ string_of_int(index);
 
-let isShapeSelected = (selection, r) =>
-  switch (selection) {
-  | Some(Shapes(shapes)) => shapes->Belt.List.has(r, (==))
-  | _ => false
-  };
+let isShapeSelected = (selection: selection, r) =>
+  selection.shapes->Belt.List.has(r, (==));
 
-let isTileSelected = (selection, r) =>
-  switch (selection) {
-  | Some(Tiles(tiles)) => tiles->Belt.List.has(r, (==))
-  | _ => false
-  };
+let isTileSelected = (selection: selection, r) =>
+  selection.tiles->Belt.List.has(r, (==));
 
-let isTileSelectedOrHovered = (selection, r) =>
-  switch (selection) {
-  | Some(Tiles(tiles)) => tiles->Belt.List.some(s => s.id == r.id)
-  | _ => false
-  };
+let isTileSelectedOrHovered = (selection: selection, r) =>
+  selection.tiles->Belt.List.some(s => s.id == r.id);
 
-let isShapeHovered = (selection, r) =>
-  switch (selection) {
-  | Some(Shapes(shapes)) => shapes->Belt.List.some(s => s.id == r.id)
-  | _ => false
-  };
+let isShapeHovered = (selection: selection, r) =>
+  selection.shapes->Belt.List.some(s => s.id == r.id);
 
-let isSelected = (selection, r) =>
-  switch (selection) {
-  | Some(Points(points)) => points->Belt.List.has(r, (==))
-  | _ => false
-  };
+let isSelected = (selection: selection, r) =>
+  selection.points->Belt.List.has(r, (==));
 
 let cmp = (a, b) => a < b ? (-1) : a > b ? 1 : 0;
 
@@ -312,7 +316,7 @@ module Point = {
       onClick
       r={string_of_int(size)}
       fill="rgba(255,255,255,0.2)"
-      stroke="rgba(0,0,0,0.5)"
+      stroke={isSelected ? "rgba(0,255,0,0.8)" : "rgba(0,0,0,0.5)"}
       strokeWidth={isSelected || isHovered ? "3" : "1"}
       className=Css.(style([hover([unsafe("stroke-width", "5")])]))
       //  strokeWidth={isSelected(selection, k) ? "3" : "0"}
@@ -329,7 +333,7 @@ let make =
       ~innerRef,
       ~hover: option(hover),
       ~scene: scene,
-      ~selection: option(selection),
+      ~selection: selection,
       ~selectPoint: reference => unit,
       ~selectShape: reference => unit,
       ~selectTile: reference => unit,
@@ -344,7 +348,7 @@ let make =
 
   let potentials =
     React.useMemo2(
-      () => Calculate.potentials(scene, selection, positions),
+      () => Potentials.potentials(scene, selection, positions),
       (scene, selection),
     );
 
@@ -426,7 +430,11 @@ let make =
              onClick={_ => {
                let (scene, k) = scene->Api.Tile.add(~sym, sides);
                setScene(scene);
-               setSelection(Some(Tiles([{id: k, index: 0}])));
+               setSelection({
+                 tiles: [{id: k, index: 0}],
+                 shapes: [],
+                 points: [],
+               });
              }}
              stroke="black"
              strokeWidth="3"
@@ -469,7 +477,11 @@ let make =
              onSelect={() => {
                let (scene, k) = scene->Api.Shape.addFull(shape);
                setScene(scene);
-               setSelection(Some(Shapes([{id: k, index: 0}])));
+               setSelection({
+                 shapes: [{id: k, index: 0}],
+                 tiles: [],
+                 points: [],
+               });
              }}
              key={string_of_int(i)}
              shape=concreteShape
@@ -500,7 +512,11 @@ let make =
                let (scene, k) =
                  scene->Api.Point.add(~sym=point.sym, point.pos);
                setScene(scene);
-               setSelection(Some(Points([{id: k, index: 0}])));
+               setSelection({
+                 points: [{id: k, index: 0}],
+                 shapes: [],
+                 tiles: [],
+               });
                // TODO
                ();
              }}

@@ -73,16 +73,19 @@ module ColorPicker = {
 module Tiles = {
   [@react.component]
   let make =
-      (~scene, ~selection, ~selectTile, ~setSelection, ~setHovered, ~setScene) => {
+      (
+        ~scene,
+        ~selection: selection,
+        ~selectTile,
+        ~setSelection,
+        ~setHovered,
+        ~setScene,
+      ) => {
     <div className=Css.(style([padding(px(2))]))>
       {scene.tiles
        ->S.toArray
        ->Belt.Array.map(((k, tile)) => {
-           let isSelected =
-             switch (selection) {
-             | Some(Tiles(s)) when s->Belt.List.some(s => s.id == k) => true
-             | _ => false
-             };
+           let isSelected = selection.tiles->Belt.List.some(s => s.id == k);
            <div
              key=k
              className=Css.(
@@ -253,7 +256,7 @@ module Shapes = {
   let make =
       (
         ~scene,
-        ~selection,
+        ~selection: selection,
         ~selectShape,
         ~setSelection,
         ~setHovered,
@@ -263,11 +266,7 @@ module Shapes = {
       {scene.shapes
        ->S.toArray
        ->Belt.Array.map(((k, shape)) => {
-           let isSelected =
-             switch (selection) {
-             | Some(Shapes(s)) when s->Belt.List.some(s => s.id == k) => true
-             | _ => false
-             };
+           let isSelected = selection.shapes->Belt.List.some(s => s.id == k);
            <div
              key=k
              onMouseOver={_ => setHovered(Some(`Shape({id: k, index: 0})))}

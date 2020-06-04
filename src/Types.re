@@ -275,12 +275,13 @@ type shapeKind =
 //   //   symmetry,
 // };
 
-type selection =
-  | Points(list(reference))
-  | Shapes(list(reference))
-  | Tiles(list(reference));
+type selection = {
+  points: list(reference),
+  shapes: list(reference),
+  tiles: list(reference),
+};
 
-type hover = [ | `Point(reference) | `Shape(reference)];
+type hover = [ | `Point(reference) | `Shape(reference) | `Tile(reference)];
 // type selection = {
 //   kind: kindSelection,
 //   sym: symmetrySelection,
