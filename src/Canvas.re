@@ -348,6 +348,30 @@ let make =
       (scene, selection),
     );
 
+  let potentialTiles =
+    potentials->Belt.List.keepMap(i =>
+      switch (i) {
+      | `Tile(t) => Some(t)
+      | _ => None
+      }
+    );
+
+  let potentialShapes =
+    potentials->Belt.List.keepMap(i =>
+      switch (i) {
+      | `Shape(t) => Some(t)
+      | _ => None
+      }
+    );
+
+  let potentialPoints =
+    potentials->Belt.List.keepMap(i =>
+      switch (i) {
+      | `Point(t) => Some(t)
+      | _ => None
+      }
+    );
+
   let transform = {
     zoom: scene.presentation.transform.zoom,
     center:
@@ -390,17 +414,30 @@ let make =
            />
          })
        ->React.array}
+      {potentialTiles
+       ->Belt.List.toArray
+       ->Belt.Array.mapWithIndex(
+           (i, (fullSides, {sym, color, margin, sides})) => {
+           <path
+             key={string_of_int(i)}
+             fill=color
+             d={polyPath(transform, fullSides, margin)}
+             //  onClick={_ => selectTile(k)}
+             onClick={_ => {
+               let (scene, k) = scene->Api.Tile.add(~sym, sides);
+               setScene(scene);
+               setSelection(Some(Tiles([{id: k, index: 0}])));
+             }}
+             stroke="black"
+             strokeWidth="3"
+             className=Css.(style([cursor(`pointer)]))
+           />
+         })
+       ->React.array}
       {(
          scene.presentation.traces
            ? shapes : shapes->Belt.Array.keep(((_, _, c)) => c != None)
        )
-       //  ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
-       //      switch (a, b) {
-       //      | (None, Some(_)) => (-1)
-       //      | (Some(_), None) => 1
-       //      | _ => 0
-       //      }
-       //    )
        ->Belt.Array.map(((k, shape, color)) =>
            <Shape
              color
@@ -421,6 +458,24 @@ let make =
            />
          )
        ->React.array}
+      {potentialShapes
+       ->Belt.List.toArray
+       ->Belt.Array.mapWithIndex((i, (shape, concreteShape)) => {
+           <Shape
+             color=None
+             isHovered=true
+             transform
+             isSelected=true
+             onSelect={() => {
+               let (scene, k) = scene->Api.Shape.addFull(shape);
+               setScene(scene);
+               setSelection(Some(Shapes([{id: k, index: 0}])));
+             }}
+             key={string_of_int(i)}
+             shape=concreteShape
+           />
+         })
+       ->React.array}
       {scene.presentation.points
          ? points
            ->Belt.Array.map(((k, pos)) => {
@@ -436,49 +491,25 @@ let make =
              })
            ->React.array
          : React.null}
-      {potentials
-       ->Belt.List.sort((a, b) =>
-           switch (a, b) {
-           | (`Point(_), `Shape(_)) => 1
-           | (`Shape(_), `Point(_)) => (-1)
-           | _ => 0
-           }
-         )
+      {potentialPoints
        ->Belt.List.toArray
-       ->Belt.Array.mapWithIndex((i, item) =>
-           switch (item) {
-           | `Point(point, pos) =>
-             <Point
-               key={string_of_int(i)}
-               onClick={_ => {
-                 let (scene, k) =
-                   scene->Api.Point.add(~sym=point.sym, point.pos);
-                 setScene(scene);
-                 setSelection(Some(Points([{id: k, index: 0}])));
-                 // TODO
-                 ();
-               }}
-               size=4
-               transform
-               pos
-               isSelected=true
-               isHovered=true
-             />
-           | `Shape(shape, concrete) =>
-             <Shape
-               color=None
-               isHovered=true
-               transform
-               isSelected=true
-               onSelect={() => {
-                 let (scene, k) = scene->Api.Shape.addFull(shape);
-                 setScene(scene);
-                 setSelection(Some(Shapes([{id: k, index: 0}])));
-               }}
-               key={string_of_int(i)}
-               shape=concrete
-             />
-           }
+       ->Belt.Array.mapWithIndex((i, (point, pos)) =>
+           <Point
+             key={string_of_int(i)}
+             onClick={_ => {
+               let (scene, k) =
+                 scene->Api.Point.add(~sym=point.sym, point.pos);
+               setScene(scene);
+               setSelection(Some(Points([{id: k, index: 0}])));
+               // TODO
+               ();
+             }}
+             size=4
+             transform
+             pos
+             isSelected=true
+             isHovered=true
+           />
          )
        ->React.array}
     </svg>;
