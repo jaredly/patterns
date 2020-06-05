@@ -64,7 +64,7 @@ let xor = (a, b) => a ? b ? false : true : b;
 let collideEndToEnd = (prev, next, clockwise) => {
   switch (prev, next) {
   | (CLine(l1), CLine(l2)) => intersection(l1.p1, l1.p2, l2.p1, l2.p2)
-  | (CLine(l1), CCirclePart({center, r, theta0} as c1)) =>
+  | (CLine(l1), CCirclePart({center, r} as c1)) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
     | [] =>
@@ -84,7 +84,7 @@ let collideEndToEnd = (prev, next, clockwise) => {
       // Js.log2("No collide more!!!", Array.of_list(points));
       None
     };
-  | (CCirclePart({center, r, theta1} as c1), CLine(l1)) =>
+  | (CCirclePart({center, r} as c1), CLine(l1)) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
     | [] => None

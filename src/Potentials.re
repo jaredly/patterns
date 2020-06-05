@@ -79,6 +79,12 @@ let potentials = (scene: scene, selection: selection, positions) =>
         );
       (
         List.length(found) > 1
+        && found->Belt.List.every(((_, _, m)) =>
+             switch (m) {
+             | CCircle(_) => false
+             | _ => true
+             }
+           )
           ? [
             {
               let sym =
