@@ -7,6 +7,34 @@ let potentials = (scene: scene, selection: selection, positions) =>
   (
     switch (selection) {
     | {points: [], tiles: [], shapes: []} => []
+    | {points: [p0], shapes: [r]} =>
+      let p0 = resolvePoint(p0, scene, positions);
+      let shape = scene.shapes->S.getExn(r.id);
+      let concrete = resolveShape(scene, r, positions);
+      switch (concrete) {
+      | CLine({p1, p2}) =>
+        let t = Calculate.angleTo(Calculate.dpos(p1, p2));
+        let p3 = Calculate.push(p0, ~theta=t +. Calculate.pi2, ~mag=10.);
+        switch (Calculate.intersection(p0, p3, p1, p2)) {
+        | None => []
+        | Some(p) => [`Point({sym: shape.sym, pos: Abs({x: p.x, y: p.y})})]
+        };
+      | CCircle({center, r})
+      | CCirclePart({center, r}) =>
+        let d = dist(dpos(p0, center));
+        if (d > r +. 0.001) {
+          let t = angleTo(dpos(center, p0));
+          let t0 = acos(r /. d);
+          let p1 = push(center, ~theta=t +. t0, ~mag=r);
+          let p2 = push(center, ~theta=t -. t0, ~mag=r);
+          [
+            `Point({sym: shape.sym, pos: Abs({x: p1.x, y: p1.y})}),
+            `Point({sym: shape.sym, pos: Abs({x: p2.x, y: p2.y})}),
+          ];
+        } else {
+          [];
+        };
+      };
     | {points: [p2, p1], tiles: [], shapes: []} =>
       let {pos: _, sym} = S.getExn(scene.points, p1.id);
       let {pos: _, sym: sym2} = S.getExn(scene.points, p2.id);
@@ -82,6 +110,14 @@ let potentials = (scene: scene, selection: selection, positions) =>
                 }),
             }),
           ]
+        | [(_, s1, CLine(l1)), (_, s2, CLine(l2)), (_, s3, CLine(l3))] =>
+          let sym = bestSym(bestSym(s1.sym, s2.sym), s3.sym);
+          let inCenter =
+            Calculate.inCenter(l1.p1, l1.p2, l2.p1, l2.p2, l3.p1, l3.p2);
+          switch (inCenter) {
+          | None => []
+          | Some(p) => [`Point({sym, pos: Abs({x: p.x, y: p.y})})]
+          };
         | [(_, s1, CLine(l1)), (_, s2, CLine(l2))] =>
           let cross = intersection(l1.p1, l1.p2, l2.p1, l2.p2);
           switch (cross) {

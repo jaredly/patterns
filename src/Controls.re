@@ -359,7 +359,8 @@ let make =
     ("Permalink", () => permalink(scene)),
     (
       "Clear scene",
-      () =>
+      () => {
+        Location.setHash(Location.location, "");
         setScene(
           {
             let scene = Api.init();
@@ -372,7 +373,8 @@ let make =
               );
             scene;
           },
-        ),
+        );
+      },
     ),
     ("Toggle points", () => togglePoints()),
     ("Toggle traces", () => toggleTraces()),

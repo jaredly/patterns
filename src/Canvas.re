@@ -488,21 +488,6 @@ let make =
            />
          })
        ->React.array}
-      {scene.presentation.points
-         ? points
-           ->Belt.Array.map(((k, pos)) => {
-               <Point
-                 key={toId(k)}
-                 size=2
-                 onClick={_ => selectPoint(k)}
-                 transform
-                 pos
-                 isSelected={isSelected(selection, k)}
-                 isHovered={hover == Some(`Point(k))}
-               />
-             })
-           ->React.array
-         : React.null}
       {potentialPoints
        ->Belt.List.toArray
        ->Belt.Array.mapWithIndex((i, (point, pos)) =>
@@ -528,5 +513,20 @@ let make =
            />
          )
        ->React.array}
+      {scene.presentation.points
+         ? points
+           ->Belt.Array.map(((k, pos)) => {
+               <Point
+                 key={toId(k)}
+                 size=2
+                 onClick={_ => selectPoint(k)}
+                 transform
+                 pos
+                 isSelected={isSelected(selection, k)}
+                 isHovered={hover == Some(`Point(k))}
+               />
+             })
+           ->React.array
+         : React.null}
     </svg>;
 };

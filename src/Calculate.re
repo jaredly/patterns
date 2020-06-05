@@ -1,5 +1,9 @@
 open Types;
 
+let pi = Js.Math._PI;
+let pi2 = pi /. 2.;
+let tau = pi *. 2.;
+
 let angleTo = ({x, y}) => atan2(y, x);
 
 let dist = ({x, y}) => {
@@ -15,6 +19,8 @@ let dpos = (p1, p2) => {
 let addPos = (a, b) => {x: a.x +. b.x, y: a.y +. b.y};
 
 let toPos = ((x, y)) => {x, y};
+
+let scalePos = ({x, y}, scale) => {x: x *. scale, y: y *. scale};
 
 let rotateAround = (point, center, theta) => {
   let diff = dpos(center, point);
@@ -90,28 +96,73 @@ let generic = (p1, p2) => {
 
 // algorithm based on this fantastic answer https://stackoverflow.com/a/3349134
 let intersectCircles = (ac, ar, bc, br) => {
-  let ratio = ar /. (ar +. br);
+  let percentFromA = ar /. (ar +. br);
   let diff = dpos(ac, bc);
   let dist = dist(diff);
-  let middle = {x: ac.x +. diff.x *. ratio, y: ac.y +. diff.y *. ratio};
-  if (dist > ar +. br) {
-    [];
-  } else if (dist == ar *. br) {
+  let gap = dist -. (ar +. br);
+  if (abs_float(gap) < 0.01) {
+    let middle = {
+      x: ac.x +. diff.x *. percentFromA,
+      y: ac.y +. diff.y *. percentFromA,
+    };
     [middle];
+  } else if (gap > 0.) {
+    [];
   } else {
+    /*
+     Ok, we've got a triangle
+     C is between the two centers
+     A is rA
+     B is rB
+
+     H is the height
+
+     a + b = C
+
+     H^2 + a^2 = A^2
+     H^2 + (C - a)^2 = B^2
+
+     H^2 = A^2 - a^2
+     H^2 = B^2 - (C - a)^2
+
+     A^2 - a^2 = B^2 - (C - a)^2
+     A^2 - a^2 = B^2 - (C^2 - 2aC + a^2)
+     A^2 - a^2 = B^2 - C^2 + 2aC - a^2
+     A^2 = B^2 - C^2 + 2aC
+     A^2 - B^2 + C^2 = 2aC
+     (A^2 - B^2 + C^2) / 2C = a
+
+     */
     let a = (ar *. ar -. br *. br +. dist *. dist) /. (2. *. dist);
     let h = sqrt(ar *. ar -. a *. a);
+    let t = angleTo(diff);
+    let middle = push(ac, ~theta=t, ~mag=a);
+
     [
-      {
-        x: middle.x +. h *. (bc.y -. ac.y) /. dist,
-        y: middle.y -. h *. (bc.x -. ac.x) /. dist,
-      },
-      {
-        x: middle.x -. h *. (bc.y -. ac.y) /. dist,
-        y: middle.y +. h *. (bc.x -. ac.x) /. dist,
-      },
+      push(middle, ~theta=t +. pi2, ~mag=h),
+      push(middle, ~theta=t -. pi2, ~mag=h),
     ];
   };
+  // let ratio = ar /. (ar +. br);
+  // let middle = {x: ac.x +. diff.x *. ratio, y: ac.y +. diff.y *. ratio};
+  // if (dist > ar +. br) {
+  //   [];
+  // } else if (dist == ar *. br) {
+  //   [middle];
+  // } else {
+  //   let a = (ar *. ar -. br *. br +. dist *. dist) /. (2. *. dist);
+  //   let h = sqrt(ar *. ar -. a *. a);
+  //   [
+  //     {
+  //       x: middle.x +. h *. (bc.y -. ac.y) /. dist,
+  //       y: middle.y -. h *. (bc.x -. ac.x) /. dist,
+  //     },
+  //     {
+  //       x: middle.x -. h *. (bc.y -. ac.y) /. dist,
+  //       y: middle.y +. h *. (bc.x -. ac.x) /. dist,
+  //     },
+  //   ];
+  // };
 };
 
 let intersection = (ap1, ap2, bp1, bp2) => {
@@ -134,10 +185,6 @@ let intersection = (ap1, ap2, bp1, bp2) => {
   };
 };
 
-let pi = Js.Math._PI;
-let pi2 = pi /. 2.;
-let tau = pi *. 2.;
-
 let force = x =>
   switch (x) {
   | None => failwith("unwrapped empty")
@@ -159,6 +206,7 @@ let lineCircle = (center, r, p1, p2) => {
     let otherSide = sqrt(r *. r -. dist *. dist);
     [
       push(closestPoint, ~theta=angle, ~mag=otherSide),
+      closestPoint,
       push(closestPoint, ~theta=angle, ~mag=-. otherSide),
     ];
   };
@@ -655,3 +703,45 @@ let bestSym = (sym, sym2) =>
   | (Some(a), Some(b)) => a.count > b.count ? Some(b) : Some(a)
   | _ => None
   };
+
+let inCenter = (a1, a2, b1, b2, c1, c2) => {
+  switch (
+    intersection(a1, a2, b1, b2),
+    intersection(a1, a2, c1, c2),
+    intersection(b1, b2, c1, c2),
+  ) {
+  | (Some(i0), Some(i1), Some(i2)) =>
+    let t01 = angleTo(dpos(i0, i1));
+    let t02 = angleTo(dpos(i0, i2));
+    let t0 = t01 +. (t02 -. t01) /. 2.;
+    let t10 = angleTo(dpos(i1, i0));
+    let t12 = angleTo(dpos(i1, i2));
+    let t1 = t10 +. (t12 -. t10) /. 2.;
+
+    intersection(
+      i0,
+      push(i0, ~theta=t0, ~mag=5.),
+      i1,
+      push(i1, ~theta=t1, ~mag=5.),
+    );
+  | _ => None
+  };
+};
+
+let circumCenter = (a1, a2, b1, b2, c1, c2) => {
+  switch (
+    intersection(a1, a2, b1, b2),
+    intersection(a1, a2, c1, c2),
+    intersection(b1, b2, c1, c2),
+  ) {
+  | (Some(i0), Some(i1), Some(i2)) =>
+    let m0 = addPos(i0, dpos(i0, i1)->scalePos(0.5));
+    let t0 = angleTo(dpos(i0, i1));
+    let m1 = addPos(i0, dpos(i0, i2)->scalePos(0.5));
+    let t1 = angleTo(dpos(i0, i2));
+    let m0a = push(m0, ~theta=t0 +. pi2, ~mag=5.);
+    let m1a = push(m1, ~theta=t1 +. pi2, ~mag=5.);
+    intersection(m0, m0a, m1, m1a);
+  | _ => None
+  };
+};
