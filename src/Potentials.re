@@ -135,6 +135,13 @@ let potentials = (scene: scene, selection: selection, positions) =>
           cross->Belt.List.map(point => {
             `Point({sym, pos: Abs({x: point.x, y: point.y})})
           });
+        | [(_, sl, CLine(l1)), (_, sc, CCirclePart(c1))]
+        | [(_, sc, CCirclePart(c1)), (_, sl, CLine(l1))] =>
+          let crosses = lineCircle(c1.center, c1.r, l1.p1, l1.p2);
+          let sym = bestSym(sl.sym, sc.sym);
+          crosses->Belt.List.map(point => {
+            `Point({sym, pos: Abs({x: point.x, y: point.y})})
+          });
         | [(_, sl, CLine(l1)), (_, sc, CCircle(c1))]
         | [(_, sc, CCircle(c1)), (_, sl, CLine(l1))] =>
           let crosses = lineCircle(c1.center, c1.r, l1.p1, l1.p2);

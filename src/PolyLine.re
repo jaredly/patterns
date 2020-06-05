@@ -54,14 +54,17 @@ let getWind = ordered => {
   totalWind;
 };
 
-/** Find the point between the end of "prev" and the start of "next". For lines,
+let xor = (a, b) => a ? b ? false : true : b;
+
+/**
+ * Find the point between the end of "prev" and the start of "next". For lines,
  * there's only ever one point of intersection, but if we've got arcs or circles
  * involved, there are two and we need to know which one.
  */
-let collideEndToEnd = (prev, next) => {
+let collideEndToEnd = (prev, next, clockwise) => {
   switch (prev, next) {
   | (CLine(l1), CLine(l2)) => intersection(l1.p1, l1.p2, l2.p1, l2.p2)
-  | (CLine(l1), CCirclePart({center, r, theta0})) =>
+  | (CLine(l1), CCirclePart({center, r, theta0} as c1)) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
     | [] =>
@@ -71,28 +74,30 @@ let collideEndToEnd = (prev, next) => {
     | [p1, _, p2] =>
       let t1 = angleTo(dpos(center, p1));
       let t2 = angleTo(dpos(center, p2));
-      if (angleDiff(theta0, t1) < angleDiff(theta0, t2)) {
-        Some(p1);
-      } else {
-        Some(p2);
-      };
+      // if (angleDiff(theta0, t1) < angleDiff(theta0, t2)) {
+      //   Some(p1);
+      // } else {
+      //   Some(p2);
+      // };
+      Some(xor(clockwise, c1.clockwise) ? p2 : p1);
     | _ =>
       // Js.log2("No collide more!!!", Array.of_list(points));
       None
     };
-  | (CCirclePart({center, r, theta1}), CLine(l1)) =>
+  | (CCirclePart({center, r, theta1} as c1), CLine(l1)) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
     | [] => None
     | [p] => Some(p)
     | [p1, _, p2] =>
-      let t1 = angleTo(dpos(center, p1));
-      let t2 = angleTo(dpos(center, p2));
-      if (angleDiff(theta1, t1) < angleDiff(theta1, t2)) {
-        Some(p1);
-      } else {
-        Some(p2);
-      };
+      // let t1 = angleTo(dpos(center, p1));
+      // let t2 = angleTo(dpos(center, p2));
+      // if (angleDiff(theta1, t1) < angleDiff(theta1, t2)) {
+      //   Some(p1);
+      // } else {
+      //   Some(p2);
+      // };
+      Some(xor(clockwise, c1.clockwise) ? p1 : p2)
     | _ => None
     };
   | _ => None
@@ -171,8 +176,10 @@ let inset = (ordered, margin) => {
   let clipped =
     pushed
     ->Belt.Array.mapWithIndex((i, shape) => {
-        let prev = collideEndToEnd(pushed[i == 0 ? ln - 1 : i - 1], shape);
-        let next = collideEndToEnd(shape, pushed[i == ln - 1 ? 0 : i + 1]);
+        let prev =
+          collideEndToEnd(pushed[i == 0 ? ln - 1 : i - 1], shape, clockwise);
+        let next =
+          collideEndToEnd(shape, pushed[i == ln - 1 ? 0 : i + 1], clockwise);
         switch (prev, next) {
         | (Some(prev), Some(next)) =>
           switch (shape) {
