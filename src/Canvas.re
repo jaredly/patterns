@@ -89,9 +89,9 @@ let polyPath = (transform, items, margin) => {
   ordered->Js.Array2.push(first)->ignore;
   loop(endp);
 
-  let ordered = Calculate.joinAdjacentLineSegments(ordered);
+  let ordered = PolyLine.joinAdjacentLineSegments(ordered);
 
-  let ordered = margin == 0. ? ordered : Calculate.inset(ordered, margin);
+  let ordered = margin == 0. ? ordered : PolyLine.inset(ordered, margin);
 
   // Js.log2("Ordered", ordered);
 
