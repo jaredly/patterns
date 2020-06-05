@@ -1,6 +1,13 @@
 open Types;
 open Calculate;
 
+// let debug = ref(false);
+// let log = (data) => {
+//   if (debug^) {
+//     Js.log(data)
+//   }
+// }
+
 let insideAngle = angle =>
   if (angle > Js.Math._PI) {
     angle -. Js.Math._PI *. 2.;
@@ -38,23 +45,6 @@ let getWind = ordered => {
     ->Belt.Array.concatMany;
   let angles =
     endPoints->Belt.Array.map(((p1, p2)) => angleTo(dpos(p1, p2)));
-  // let angles =
-  //   ordered->Belt.Array.map(shape => {
-  //     switch (shape) {
-  //     | CLine({p1, p2}) =>
-  //       let t = angleTo(dpos(p1, p2));
-  //       (t, t);
-  //     | CCirclePart({center, r, theta0, theta1, clockwise}) =>
-  //       // ooh. Hm. The clockwise bit.
-  //       let midT = (theta0 +. theta1) /. 2.;
-  //       let mid = push(center, ~theta=midT, ~mag=r);
-  //       let p0 = push(center, ~theta=theta0, ~mag=r);
-  //       let p1 = push(center, ~theta=theta1, ~mag=r);
-  //       (angleTo(dpos(p0, mid)), angleTo(dpos(mid, p1)))
-  //     // TODO maybe use a polymorphic variant?
-  //     | CCircle(_) => assert(false)
-  //     }
-  //   });
   let diffs =
     angles->Belt.Array.mapWithIndex((i, angle) => {
       let prev = angles[i == 0 ? ln - 1 : i - 1];
@@ -74,9 +64,11 @@ let collideEndToEnd = (prev, next) => {
   | (CLine(l1), CCirclePart({center, r, theta0})) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
-    | [] => None
+    | [] =>
+      Js.log("No collide!!!");
+      None;
     | [p] => Some(p)
-    | [p1, p2] =>
+    | [p1, _, p2] =>
       let t1 = angleTo(dpos(center, p1));
       let t2 = angleTo(dpos(center, p2));
       if (angleDiff(theta0, t1) < angleDiff(theta0, t2)) {
@@ -84,14 +76,16 @@ let collideEndToEnd = (prev, next) => {
       } else {
         Some(p2);
       };
-    | _ => None
+    | _ =>
+      // Js.log2("No collide more!!!", Array.of_list(points));
+      None
     };
   | (CCirclePart({center, r, theta1}), CLine(l1)) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
     | [] => None
     | [p] => Some(p)
-    | [p1, p2] =>
+    | [p1, _, p2] =>
       let t1 = angleTo(dpos(center, p1));
       let t2 = angleTo(dpos(center, p2));
       if (angleDiff(theta1, t1) < angleDiff(theta1, t2)) {
@@ -112,8 +106,6 @@ let (|?) = (a, b) =>
   };
 
 let joinAdjacentLineSegments = ordered => {
-  // let res = [||]
-  let last = ref(None);
   let (_, items) =
     ordered->Belt.Array.reduce((None, []), ((last, items), shape) => {
       switch (shape) {
@@ -135,15 +127,9 @@ let joinAdjacentLineSegments = ordered => {
           },
         )
       | _ => (None, [shape, ...items])
-      // let next = switch shape {
-      //   | CLine({p1, p2}) => Some((p1, p2))
-      //   | _ => None
-      // }
       }
     });
   items->List.rev->Belt.List.toArray;
-  // ordered->Belt.Array.forEach(shape => {
-  // })
 };
 
 let inset = (ordered, margin) => {
@@ -168,53 +154,53 @@ let inset = (ordered, margin) => {
         });
       // erg there's definitely a case where I want the radius to increase.
       // if the way we're going is the opposite of the clockwised-ness of the arc, I think.
-      | CCirclePart(c1) => CCirclePart({...c1, r: c1.r -. margin})
+      | CCirclePart(c1) =>
+        let dir =
+          clockwise ? c1.clockwise ? (-1.) : 1. : c1.clockwise ? 1. : (-1.);
+        CCirclePart({
+          ...c1,
+          r:
+            // are we inside? or are we dancer?
+            // I don't know .. what the deal is ..
+            // How do I know what side of the road we're on...
+            c1.r +. margin *. dir,
+        });
       | x => x
       }
     );
   let clipped =
-    pushed->Belt.Array.mapWithIndex((i, shape) => {
-      let prev = collideEndToEnd(pushed[i == 0 ? ln - 1 : i - 1], shape);
-      let next = collideEndToEnd(shape, pushed[i == ln - 1 ? 0 : i + 1]);
-      switch (shape) {
-      | CLine({p1, p2}) => CLine({p1: prev |? p1, p2: next |? p2})
-      | CCirclePart(c1) =>
-        let theta0 =
-          switch (prev) {
-          | Some(p) => angleTo(dpos(c1.center, p))
-          | None => c1.theta0
-          };
-        let theta1 =
-          switch (next) {
-          | Some(p) => angleTo(dpos(c1.center, p))
-          | None => c1.theta1
-          };
+    pushed
+    ->Belt.Array.mapWithIndex((i, shape) => {
+        let prev = collideEndToEnd(pushed[i == 0 ? ln - 1 : i - 1], shape);
+        let next = collideEndToEnd(shape, pushed[i == ln - 1 ? 0 : i + 1]);
+        switch (prev, next) {
+        | (Some(prev), Some(next)) =>
+          switch (shape) {
+          | CLine(_) => Some(CLine({p1: prev, p2: next}))
+          | CCirclePart(c1) =>
+            let theta0 = angleTo(dpos(c1.center, prev));
+            let theta1 = angleTo(dpos(c1.center, next));
 
-        // ***********
-        // START HERE
-        // ***********
-        // In order for this to work, I need to un-normalize this (it's currently normalized)
-        // and the start wasn't normalized, so we're getting all weird.
-        // e.g. if theta1 was larger than theta0, it needs to be after.
+            let theta1 =
+              if (c1.theta1 > c1.theta0) {
+                if (theta1 > theta0) {
+                  theta1;
+                } else {
+                  theta1 +. tau;
+                };
+              } else if (theta1 > theta0) {
+                theta1 -. tau;
+              } else {
+                theta1;
+              };
 
-        // Sooo clooose -- it looks like collideEndToEnd is picking the wrong one in the one case.
-        let theta1 =
-          if (c1.theta1 > c1.theta0) {
-            if (theta1 > theta0) {
-              theta1;
-            } else {
-              theta1 +. tau;
-            };
-          } else if (theta1 > theta0) {
-            theta1 -. tau;
-          } else {
-            theta1;
-          };
-
-        CCirclePart({...c1, theta0, theta1});
-      | x => x
-      };
-    });
+            Some(CCirclePart({...c1, theta0, theta1}));
+          | _ => None
+          }
+        | _ => None
+        };
+      })
+    ->Belt.Array.keepMap(x => x);
   // Js.log("reversed");
   // getWind(ordered->Belt.Array.reverse);
   // ok, gotta find out the winding direction.

@@ -341,3 +341,4 @@ type scene = {
   tiles,
   presentation,
 };
+let emptySelection = {tiles: [], shapes: [], points: []};

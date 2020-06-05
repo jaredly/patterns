@@ -20,8 +20,6 @@ type state = {
   history: list(Types.scene),
 };
 
-let emptySelection: Types.selection = {tiles: [], shapes: [], points: []};
-
 // let (id, scene) = Controls.getInitial(scene);
 let loadInitial = () => {
   Controls.getInitial(scene)
@@ -35,7 +33,7 @@ let loadInitial = () => {
            current: Js.Nullable.null,
          },
          scene,
-         selection: emptySelection,
+         selection: Types.emptySelection,
          history: [],
        })
      });
@@ -52,7 +50,7 @@ let reduce = (state, action) => {
         ...state,
         scene,
         history,
-        selection: emptySelection,
+        selection: Types.emptySelection,
       }
     }
   | `TogglePoints => {

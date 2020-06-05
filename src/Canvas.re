@@ -1,16 +1,5 @@
 open Types;
 
-// module Shape = {
-//     [@react.component]
-//     let make = (~shape: shape) => {
-//         switch (shape.kind) {
-//             | Line({p1, p2}) => <Line p1 p2 />
-//             | Circle({pos, radius}) => <Circle pos radius />
-//             | Arc({p1, p2, p3}) => <Arc p1 p2 p3 />
-//         }
-//     }
-// }
-
 module Colors = {
   let selected = "rgba(0, 255, 0, 1.0)";
   let hovered = "#555";
@@ -48,22 +37,21 @@ let findMap = (arr, fn) => {
   loop(0);
 };
 
-let polyPath = (transform, items, margin) => {
-  // Js.log2("Poly Path", Belt.List.toArray(items));
-
-  // how to sort things?
-  // pick one.
-  // go through until you fine the one at its tail
-  // flip that if needed
-  // keep going
+let orderItems = items => {
   let pool = Belt.List.toArray(items);
   let ordered = [||];
 
+  /**
+   * how to sort things?
+   * pick one.
+   * go through until you fine the one at its tail
+   * flip that if needed
+   * keep going
+   */
   let rec loop = endp =>
     if (Array.length(pool) == 0) {
       ();
     } else {
-      // Js.log2("lookgin for", endp);
       let found =
         pool->findMap(shape => {
           let (astartp, aendp) = Calculate.endPoints(shape);
@@ -88,6 +76,12 @@ let polyPath = (transform, items, margin) => {
   let (_, endp) = Calculate.endPoints(first);
   ordered->Js.Array2.push(first)->ignore;
   loop(endp);
+
+  ordered;
+};
+
+let polyPath = (transform, items, margin) => {
+  let ordered = orderItems(items);
 
   let ordered = PolyLine.joinAdjacentLineSegments(ordered);
 

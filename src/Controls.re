@@ -185,6 +185,19 @@ let buttonsForShapes = (shapes, scene, setSelection, setScene, setColor) => {
   //   | _ => []
   //   }
   // );
+  // | {shapes: [r], points: [], tiles: []} => [(
+  //         "Remove shape",
+  //         (
+  //           () => {
+  //             setSelection(None);
+  //             setScene({
+  //               ...scene,
+  //               shapes: scene.shapes->Belt.Map.String.remove(s.Types.id),
+  //             });
+  //           }
+  //         ),
+
+  // )]
   colors;
 };
 
@@ -379,28 +392,50 @@ let make =
     ("Toggle points", () => togglePoints()),
     ("Toggle traces", () => toggleTraces()),
     ("Undo", onUndo),
-    ...switch (selection) {
-       | {tiles: [], shapes: [], points: []} => []
-       | _ => [
-           (
-             "Clear",
-             (() => setSelection({tiles: [], shapes: [], points: []})),
-           ),
-           //  ...switch (selection) {
-           //     | Points(items) =>
-           //       buttonsForPoints(items, scene, setSelection, setScene)
-           //     | Tiles(tiles) => []
-           //     | Shapes(shapes) =>
-           //       buttonsForShapes(
-           //         shapes,
-           //         scene,
-           //         setSelection,
-           //         setScene,
-           //         setColor,
-           //       )
-           //     },
-         ]
-       },
+    ...(
+         switch (selection) {
+         | {tiles: [], shapes: [], points: []} => []
+         | _ => [
+             (
+               "Clear",
+               (() => setSelection({tiles: [], shapes: [], points: []})),
+             ),
+           ]
+         }
+       )
+       @ (
+         switch (selection) {
+         | {shapes: [r], points: [], tiles: []} => [
+             (
+               "Remove shape",
+               (
+                 () => {
+                   setSelection(Types.emptySelection);
+                   setScene({
+                     ...scene,
+                     shapes: scene.shapes->Belt.Map.String.remove(r.id),
+                   });
+                 }
+               ),
+             ),
+           ]
+         | {shapes: [], points: [], tiles: [r]} => [
+             (
+               "Remove tile",
+               (
+                 () => {
+                   setSelection(Types.emptySelection);
+                   setScene({
+                     ...scene,
+                     tiles: scene.tiles->Belt.Map.String.remove(r.id),
+                   });
+                 }
+               ),
+             ),
+           ]
+         | _ => []
+         }
+       ),
   ];
   <div>
     {buttons
