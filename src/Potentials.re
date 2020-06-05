@@ -78,7 +78,7 @@ let potentials = (scene: scene, selection: selection, positions) =>
           )
         );
       (
-        List.length(found) > 2
+        List.length(found) > 1
           ? [
             {
               let sym =

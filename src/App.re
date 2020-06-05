@@ -75,6 +75,13 @@ let reduce = (state, action) => {
         },
       },
     }
+  | `DeselectTile(id) => {
+      ...state,
+      selection: {
+        ...state.selection,
+        tiles: state.selection.tiles->Belt.List.keep(k => k.id != id),
+      },
+    }
   | `SelectTile(reference) => {
       ...state,
       selection: {
@@ -232,6 +239,7 @@ let make = (~initial) => {
         selectPoint={res => dispatch(`SelectPoint(res))}
         selectShape={res => dispatch(`SelectShape(res))}
         selectTile={res => dispatch(`SelectTile(res))}
+        deselectTile={res => dispatch(`DeselectTile(res))}
         setHovered={s => dispatch(`SetHover(s))}
         setScene={s => dispatch(`SetScene(s))}
         setSelection={s => dispatch(`SetSelection(s))}

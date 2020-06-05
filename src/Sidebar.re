@@ -77,6 +77,7 @@ module Tiles = {
         ~scene,
         ~selection: selection,
         ~selectTile,
+        ~deselectTile,
         ~setSelection,
         ~setHovered,
         ~setScene,
@@ -94,7 +95,9 @@ module Tiles = {
                )
              )>
              <div
-               onClick={_ => selectTile({id: k, index: 0})}
+               onClick={_ =>
+                 isSelected ? deselectTile(k) : selectTile({id: k, index: 0})
+               }
                className=Css.(
                  style([
                    cursor(`pointer),
@@ -374,6 +377,7 @@ let make =
       ~selectPoint,
       ~selectShape,
       ~selectTile,
+      ~deselectTile,
       ~setScene,
       ~setSelection,
       ~setHovered,
@@ -390,7 +394,15 @@ let make =
       className=Css.(
         style([flex(`num(1.)), minHeight(`px(0)), overflow(`auto)])
       )>
-      <Tiles scene selection setScene setSelection setHovered selectTile />
+      <Tiles
+        scene
+        selection
+        setScene
+        setSelection
+        setHovered
+        selectTile
+        deselectTile
+      />
     </div>
     <div
       className=Css.(style([fontSize(`percent(130.)), padding(px(8))]))>
