@@ -12,23 +12,18 @@ let scene = {
 type state = {
   id: option(string),
   hover: option(Types.hover),
-  // showPoints: bool,
-  // showTraces: bool,
   scene: Types.scene,
   svgRef: React.ref(Js.Nullable.t(Dom.element)),
   selection: Types.selection,
   history: list(Types.scene),
 };
 
-// let (id, scene) = Controls.getInitial(scene);
 let loadInitial = () => {
   Controls.getInitial(scene)
   |> Js.Promise.then_(((id, scene)) => {
        Js.Promise.resolve({
          id,
          hover: None,
-         //  showPoints: true,
-         //  showTraces: true,
          svgRef: {
            current: Js.Nullable.null,
          },
@@ -169,7 +164,7 @@ let make = (~initial) => {
                switch (scene) {
                | None => ()
                | Some(scene) =>
-                 Controls.Location.setHash(Controls.Location.location, id);
+                 Controls.Location.setHash(id);
                  dispatch(`Load((id, Versions.upgrade(scene))));
                };
                Js.Promise.resolve();
@@ -181,7 +176,7 @@ let make = (~initial) => {
             switch (state.id) {
             | None =>
               let id = Api.genId();
-              Controls.Location.setHash(Controls.Location.location, id);
+              Controls.Location.setHash(id);
               id;
             | Some(id) => id
             };
@@ -213,24 +208,7 @@ let make = (~initial) => {
             }),
           );
         }}
-        // setTransform({...transform, zoom});
       />
-      // {React.string("dx")}
-      // <input
-      //   value={transform.dx->Js.Float.toString}
-      //   onChange={evt => {
-      //     let dx = evt->ReactEvent.Form.target##value->Js.Float.fromString;
-      //     setTransform({...transform, dx});
-      //   }}
-      // />
-      // {React.string("dy")}
-      // <input
-      //   value={transform.dy->Js.Float.toString}
-      //   onChange={evt => {
-      //     let dy = evt->ReactEvent.Form.target##value->Js.Float.fromString;
-      //     setTransform({...transform, dy});
-      //   }}
-      // />
       <Sidebar
         scene={state.scene}
         selection={state.selection}
@@ -244,27 +222,4 @@ let make = (~initial) => {
       />
     </div>
   </div>;
-  // </button>
-  //   {React.string("-")}
-  //   }}>
-  //     setTransform({zoom: nzoom, dx: ndx, dy: ndy});
-  //     let ndy = cy -. hh /. nzoom;
-  //     let ndx = cx -. hw /. nzoom;
-  //     let cy = hh /. scene.presentation.transform.zoom +. scene.presentation.transform.center.y;
-  //     let cx = hw /. scene.presentation.transform.zoom +. scene.presentation.transform.center.x;
-  //     let nzoom = scene.presentation.transform.zoom /. 1.5;
-  //   onClick={_ => {
-  // <button
-  // </button>
-  //   {React.string("+")}
-  //   }}>
-  //     setTransform({zoom: nzoom, dx: ndx, dy: ndy});
-  //     Js.log3("ok", cx, cy);
-  //     // let ndy = cy -. hh /. nzoom;
-  //     // let ndx = cx -. hw /. nzoom;
-  //     // let cy = hh /. scene.presentation.transform.zoom +. scene.presentation.transform.center.y;
-  //     // let cx = hw /. scene.presentation.transform.zoom +. scene.presentation.transform.center.x;
-  //     let nzoom = scene.presentation.transform.zoom *. 1.5;
-  //   onClick={_ => {
-  // <button
 };

@@ -313,6 +313,8 @@ module Location = {
   [@bs.val] external location: location = "location";
   [@bs.set] external setHash: (location, string) => unit = "hash";
   [@bs.get] external hash: location => string = "hash";
+  let hash = () => hash(location);
+  let setHash = hash => setHash(location, hash);
 };
 
 let force = x =>
@@ -323,15 +325,11 @@ let force = x =>
 
 let permalink = (scene: scene) => {
   Js.log(scene);
-  Location.setHash(
-    Location.location,
-    Serialize.serializeAnyToJson(scene)->Js.Json.stringify,
-  );
+  Location.setHash(Serialize.serializeAnyToJson(scene)->Js.Json.stringify);
 };
 
 let getInitial = default => {
-  let current =
-    Location.hash(Location.location)->Js.Global.decodeURIComponent;
+  let current = Location.hash()->Js.Global.decodeURIComponent;
   if (String.length(current) > 1) {
     let raw = Js.String2.sliceToEnd(current, ~from=1);
     if (raw.[0] == '{') {
@@ -373,7 +371,7 @@ let make =
     (
       "Clear scene",
       () => {
-        Location.setHash(Location.location, "");
+        Location.setHash("");
         setScene(
           {
             let scene = Api.init();

@@ -7,7 +7,7 @@ module Colors = {
 };
 
 let tx = (x, transform) => (x -. transform.center.x) *. transform.zoom;
-let ty = (y, transform) => (y -. transform.center.x) *. transform.zoom;
+let ty = (y, transform) => (y -. transform.center.y) *. transform.zoom;
 let tf = (f, transform) => f *. transform.zoom;
 
 let s = Js.Float.toString;
