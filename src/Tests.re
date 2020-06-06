@@ -136,6 +136,42 @@ let make = (~which) => {
           ]
         };
       },
+      {
+        [
+          [
+            CCirclePart({
+              center: {
+                x: 100.,
+                y: 100.,
+              },
+              r: 50.,
+              theta0: 0.,
+              theta1: pi2,
+              clockwise: true,
+            }),
+            CCirclePart({
+              center: {
+                x: 125.,
+                y: 100.,
+              },
+              r: 25.,
+              theta0: 0.,
+              theta1: pi2,
+              clockwise: true,
+            }),
+            CLine({
+              p1: {
+                x: 125.,
+                y: 50.,
+              },
+              p2: {
+                x: 100.,
+                y: 50.,
+              },
+            }),
+          ],
+        ];
+      },
     |]
     ->Belt.List.concatMany
     ->Array.of_list;

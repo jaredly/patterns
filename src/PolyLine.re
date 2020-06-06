@@ -128,9 +128,34 @@ let collideEndToEnd = (prev, next, clockwise) => {
   | (CCirclePart(c1), CCirclePart(c2)) =>
     switch (intersectCircles(c1.center, c1.r, c2.center, c2.r)) {
     | [p0, p1] =>
-      // Cases:
-      // c1
-      Some(xor(clockwise, c1.clockwise) ? p0 : p1)
+      let angleDiff = c1.theta1 -. c2.theta0;
+      // if (c1.clockwise != c2.clockwise) {
+      //   // it's a sharp angle
+      // } else {
+      //   // it's a "softer" angle
+      // }
+      switch (c1.clockwise, c2.clockwise, clockwise, angleDiff > 0.) {
+      // | (true, true, true, true) => Some(p1)
+      | (true, true, true, false) => Some(p0)
+      | _ => Some(p0)
+      };
+    // if (abs_float(angleDiff) < 0.01) {
+    //   // the circles are tangent.
+    //   ()
+    // } else if (angleDiff < 0.) {
+    //   // the circle we're going to is "a corner to the left"
+    //   ()
+    // } else {
+    //   // the circle we're going to is "a corner to the right"
+    //   ()
+    // };
+    // None
+    // Cases:
+    // _/
+    // -\
+    // |/
+    // |\
+    // Some(xor(clockwise, c1.clockwise) ? p0 : p1)
     | _ => None
     }
   | (CLine(l1), CCirclePart({center, r} as c1)) =>
@@ -141,14 +166,14 @@ let collideEndToEnd = (prev, next, clockwise) => {
       None;
     | [p] => Some(p)
     | [p1, _, p2] =>
-      let t1 = angleTo(dpos(center, p1));
-      let t2 = angleTo(dpos(center, p2));
+      // let t1 = angleTo(dpos(center, p1));
+      // let t2 = angleTo(dpos(center, p2));
       // if (angleDiff(theta0, t1) < angleDiff(theta0, t2)) {
       //   Some(p1);
       // } else {
       //   Some(p2);
       // };
-      Some(xor(clockwise, c1.clockwise) ? p2 : p1);
+      Some(xor(clockwise, c1.clockwise) ? p2 : p1)
     | _ =>
       // Js.log2("No collide more!!!", Array.of_list(points));
       None
@@ -233,9 +258,9 @@ let inset = (ordered, margin, debug) => {
         // erg there's definitely a case where I want the radius to increase.
         // if the way we're going is the opposite of the clockwised-ness of the arc, I think.
         | CCirclePart(c1) =>
-          // let dir = xor(clockwise, c1.clockwise) ? 1. : (-1.);
-          let dir =
-            clockwise ? c1.clockwise ? (-1.) : 1. : c1.clockwise ? 1. : (-1.);
+          let dir = xor(clockwise, c1.clockwise) ? 1. : (-1.);
+          // let dir =
+          //   clockwise ? c1.clockwise ? (-1.) : 1. : c1.clockwise ? 1. : (-1.);
           CCirclePart({
             ...c1,
             r:
