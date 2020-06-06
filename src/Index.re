@@ -4,8 +4,8 @@
 
 let hash = Controls.Location.hash();
 
-if (hash == "#test") {
-  ReactDOMRe.render(<Tests />, document##getElementById("root"));
+if (hash->Js.String2.startsWith("#test")) {
+  ReactDOMRe.render(<Tests which=hash />, document##getElementById("root"));
 } else {
   App.loadInitial()
   |> Js.Promise.then_(initial => {

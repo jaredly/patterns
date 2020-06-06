@@ -2,7 +2,7 @@
 open Types;
 open Calculate;
 
-let circleTest = (c1, r1, c2, r2) => {
+let twoCircles = (c1, r1, c2, r2) => {
   let crosses = Calculate.intersectCircles(c1, r1, c2, r2);
   switch (crosses) {
   | [p1, p2] => [
@@ -76,47 +76,133 @@ let circleTest = (c1, r1, c2, r2) => {
 };
 
 [@react.component]
-let make = () => {
+let make = (~which) => {
   let tests =
     [|
-      circleTest({x: 40., y: 40.}, 50., {x: 100., y: 100.}, 75.),
-      circleTest({x: 70., y: 70.}, 50., {x: 100., y: 100.}, 75.),
+      twoCircles({x: 40., y: 40.}, 50., {x: 100., y: 100.}, 75.),
+      twoCircles({x: 70., y: 70.}, 50., {x: 100., y: 100.}, 75.),
+      {
+        let p0 = {x: 30., y: 30.};
+        let p4 = {x: 110., y: 110.};
+        let center = {x: 100., y: 100.};
+        let r = 50.;
+        switch (Calculate.pointCircle(center, r, p0)) {
+        | None => []
+        | Some((p1, p2)) => [
+            [
+              CLine({p1: p0, p2: p1}),
+              CLine({p1: p0, p2}),
+              CCirclePart({
+                center,
+                r,
+                theta0: angleTo(dpos(center, p1)),
+                theta1: angleTo(dpos(center, p2)),
+                clockwise: true,
+              }),
+            ],
+            [
+              CLine({p1: p0, p2: p1}),
+              CLine({p1: p0, p2}),
+              CCirclePart({
+                center,
+                r,
+                theta0: angleTo(dpos(center, p1)),
+                theta1: angleTo(dpos(center, p2)),
+                clockwise: false,
+              }),
+            ],
+            [
+              CLine({p1: p4, p2: p1}),
+              CLine({p1: p4, p2}),
+              CCirclePart({
+                center,
+                r,
+                theta0: angleTo(dpos(center, p1)),
+                theta1: angleTo(dpos(center, p2)),
+                clockwise: true,
+              }),
+            ],
+            [
+              CLine({p1: p4, p2: p1}),
+              CLine({p1: p4, p2}),
+              CCirclePart({
+                center,
+                r,
+                theta0: angleTo(dpos(center, p1)),
+                theta1: angleTo(dpos(center, p2)),
+                clockwise: false,
+              }),
+            ],
+          ]
+        };
+      },
     |]
     ->Belt.List.concatMany
     ->Array.of_list;
+
+  let tests =
+    switch (Js.String.split("/", which)) {
+    | [|_, one|] => [|tests[int_of_string(one)]|]
+    | _ => tests
+    };
+
   <div>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width={string_of_int(1000) ++ "px"}
       height={string_of_int(1000) ++ "px"}>
       {tests
-       ->Belt.Array.mapWithIndex((i, sides) =>
-           <path
-             key={string_of_int(i)}
-             fill="red"
-             d={Canvas.polyPath(
-               {
-                 center: {
-                   x: (-50.) -. float_of_int(i mod 4) *. 200.,
-                   y: (-50.) -. float_of_int(i / 4) *. 200.,
-                 },
-                 zoom: 1.,
-               },
-               sides,
-               0.,
-             )}
-             stroke="black"
-             strokeWidth="3"
-             className=Css.(
-               style([
-                 cursor(`pointer),
-                 opacity(0.5),
-                 //  hover([
-                 //  ])
-               ])
-             )
-           />
-         )
+       ->Belt.Array.mapWithIndex((i, sides) => {
+           let center = {
+             x: (-50.) -. float_of_int(i mod 4) *. 200.,
+             y: (-50.) -. float_of_int(i / 4) *. 200.,
+           };
+
+           <React.Fragment key={string_of_int(i)}>
+             <path
+               fill="red"
+               d={Canvas.polyPath({center, zoom: 1.}, sides, 0., false)}
+               stroke="black"
+               strokeWidth="3"
+               className=Css.(
+                 style([
+                   cursor(`pointer),
+                   opacity(0.5),
+                   //  hover([
+                   //  ])
+                 ])
+               )
+             />
+             <path
+               fill="blue"
+               d={Canvas.polyPath({center, zoom: 1.}, sides, 5., false)}
+               stroke="black"
+               strokeWidth="3"
+               className=Css.(
+                 style([
+                   cursor(`pointer),
+                   opacity(0.5),
+                   //  hover([
+                   //  ])
+                 ])
+               )
+             />
+             <path
+               fill="transparent"
+               d={Canvas.polyPath({center, zoom: 1.}, sides, 5., true)}
+               stroke="green"
+               strokeWidth="10"
+               className=Css.(
+                 style([
+                   cursor(`pointer),
+                   opacity(0.5),
+                   //  hover([
+                   //  ])
+                 ])
+               )
+             />
+           </React.Fragment>;
+         })
        ->React.array}
     </svg>
   </div>;

@@ -21,19 +21,13 @@ let potentials = (scene: scene, selection: selection, positions) =>
         };
       | CCircle({center, r})
       | CCirclePart({center, r}) =>
-        let d = dist(dpos(p0, center));
-        if (d > r +. 0.001) {
-          let t = angleTo(dpos(center, p0));
-          let t0 = acos(r /. d);
-          let p1 = push(center, ~theta=t +. t0, ~mag=r);
-          let p2 = push(center, ~theta=t -. t0, ~mag=r);
-          [
+        switch (Calculate.pointCircle(center, r, p0)) {
+        | None => []
+        | Some((p1, p2)) => [
             `Point({sym: shape.sym, pos: Abs({x: p1.x, y: p1.y})}),
             `Point({sym: shape.sym, pos: Abs({x: p2.x, y: p2.y})}),
-          ];
-        } else {
-          [];
-        };
+          ]
+        }
       };
     | {points: [p2, p1], tiles: [], shapes: []} =>
       let {pos: _, sym} = S.getExn(scene.points, p1.id);

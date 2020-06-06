@@ -191,6 +191,19 @@ let force = x =>
   | Some(x) => x
   };
 
+let pointCircle = (center, r, p) => {
+  let d = dist(dpos(p, center));
+  if (d > r +. 0.001) {
+    let t = angleTo(dpos(center, p));
+    let t0 = acos(r /. d);
+    let p1 = push(center, ~theta=t +. t0, ~mag=r);
+    let p2 = push(center, ~theta=t -. t0, ~mag=r);
+    Some((p1, p2));
+  } else {
+    None;
+  };
+};
+
 let lineCircle = (center, r, p1, p2) => {
   let angle = angleTo(dpos(p1, p2));
   let closestPoint =

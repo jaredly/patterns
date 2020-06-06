@@ -61,13 +61,6 @@ let orderItems = items => {
   ordered;
 };
 
-// let debug = ref(false);
-// let log = (data) => {
-//   if (debug^) {
-//     Js.log(data)
-//   }
-// }
-
 let insideAngle = angle =>
   if (angle > Js.Math._PI) {
     angle -. Js.Math._PI *. 2.;
@@ -93,7 +86,8 @@ let getWind = ordered => {
         | CLine({p1, p2}) => [|(p1, p2)|]
         | CCirclePart({center, r, theta0, theta1, clockwise}) =>
           let p0 = push(center, ~theta=theta0, ~mag=r);
-          let off = clockwise ? pi /. 50. : -. pi /. 50.;
+          let off = pi /. 10.;
+          let off = clockwise ? off : -. off;
           let p1 = push(center, ~theta=theta0 +. off, ~mag=r);
           let p2 = push(center, ~theta=theta1 -. off, ~mag=r);
           let p3 = push(center, ~theta=theta1, ~mag=r);
@@ -212,91 +206,103 @@ let joinAdjacentLineSegments = ordered => {
   items->List.rev->Belt.List.toArray;
 };
 
-let inset = (ordered, margin) => {
+let inset = (ordered, margin, debug) => {
   let ln = Array.length(ordered);
   // if we're clockwise, each line wants get pushed to
   // the right (if it's going up)
   // so, theta +. pi /. 2.
   /// Otherwise, push it theta -. pi /. 2.
-  let (_endPoints, wind) = getWind(ordered);
-  let clockwise = wind > 0.;
-  let pushed =
-    ordered->Belt.Array.map(shape =>
-      switch (shape) {
-      | CLine({p1, p2}) =>
-        let theta =
-          angleTo(dpos(p1, p2))
-          +. Js.Math._PI
-          /. 2.
-          *. (clockwise ? 1. : (-1.));
-        CLine({
-          p1: push(p1, ~theta, ~mag=margin),
-          p2: push(p2, ~theta, ~mag=margin),
-        });
-      // erg there's definitely a case where I want the radius to increase.
-      // if the way we're going is the opposite of the clockwised-ness of the arc, I think.
-      | CCirclePart(c1) =>
-        let dir = xor(clockwise, c1.clockwise) ? 1. : (-1.);
-        // clockwise ? c1.clockwise ? (-1.) : 1. : c1.clockwise ? 1. : (-1.);
-        CCirclePart({
-          ...c1,
-          r:
-            // are we inside? or are we dancer?
-            // I don't know .. what the deal is ..
-            // How do I know what side of the road we're on...
-            c1.r +. margin *. dir,
-        });
-      | x => x
-      }
-    );
-  let clipped =
-    pushed
-    ->Belt.Array.mapWithIndex((i, shape) => {
-        let prev =
-          collideEndToEnd(pushed[i == 0 ? ln - 1 : i - 1], shape, clockwise);
-        let next =
-          collideEndToEnd(shape, pushed[i == ln - 1 ? 0 : i + 1], clockwise);
-        switch (prev, next) {
-        | (Some(prev), Some(next)) =>
-          switch (shape) {
-          | CLine(_) => Some(CLine({p1: prev, p2: next}))
-          | CCirclePart(c1) =>
-            let theta0 = angleTo(dpos(c1.center, prev));
-            let theta1 = angleTo(dpos(c1.center, next));
+  let (endPoints, wind) = getWind(ordered);
+  if (debug) {
+    endPoints->Belt.Array.map(((p1, p2)) => CLine({p1, p2}));
+  } else {
+    let clockwise = wind > 0.;
+    let pushed =
+      ordered->Belt.Array.map(shape =>
+        switch (shape) {
+        | CLine({p1, p2}) =>
+          let theta =
+            angleTo(dpos(p1, p2))
+            +. Js.Math._PI
+            /. 2.
+            *. (clockwise ? 1. : (-1.));
+          CLine({
+            p1: push(p1, ~theta, ~mag=margin),
+            p2: push(p2, ~theta, ~mag=margin),
+          });
+        // erg there's definitely a case where I want the radius to increase.
+        // if the way we're going is the opposite of the clockwised-ness of the arc, I think.
+        | CCirclePart(c1) =>
+          // let dir = xor(clockwise, c1.clockwise) ? 1. : (-1.);
+          let dir =
+            clockwise ? c1.clockwise ? (-1.) : 1. : c1.clockwise ? 1. : (-1.);
+          CCirclePart({
+            ...c1,
+            r:
+              // are we inside? or are we dancer?
+              // I don't know .. what the deal is ..
+              // How do I know what side of the road we're on...
+              c1.r +. margin *. dir,
+          });
+        | x => x
+        }
+      );
+    let clipped =
+      pushed
+      ->Belt.Array.mapWithIndex((i, shape) => {
+          let prev =
+            collideEndToEnd(
+              pushed[i == 0 ? ln - 1 : i - 1],
+              shape,
+              clockwise,
+            );
+          let next =
+            collideEndToEnd(
+              shape,
+              pushed[i == ln - 1 ? 0 : i + 1],
+              clockwise,
+            );
+          switch (prev, next) {
+          | (Some(prev), Some(next)) =>
+            switch (shape) {
+            | CLine(_) => Some(CLine({p1: prev, p2: next}))
+            | CCirclePart(c1) =>
+              let theta0 = angleTo(dpos(c1.center, prev));
+              let theta1 = angleTo(dpos(c1.center, next));
 
-            let theta1 =
-              if (c1.theta1 > c1.theta0) {
-                if (theta1 > theta0) {
-                  theta1;
+              let theta1 =
+                if (c1.theta1 > c1.theta0) {
+                  if (theta1 > theta0) {
+                    theta1;
+                  } else {
+                    theta1 +. tau;
+                  };
+                } else if (theta1 > theta0) {
+                  theta1 -. tau;
                 } else {
-                  theta1 +. tau;
+                  theta1;
                 };
-              } else if (theta1 > theta0) {
-                theta1 -. tau;
-              } else {
-                theta1;
-              };
 
-            Some(CCirclePart({...c1, theta0, theta1}));
+              Some(CCirclePart({...c1, theta0, theta1}));
+            | _ => None
+            }
           | _ => None
-          }
-        | _ => None
-        };
-      })
-    ->Belt.Array.keepMap(x => x);
-  // Js.log("reversed");
-  // getWind(ordered->Belt.Array.reverse);
-  // ok, gotta find out the winding direction.
-  // like, are we going clockwise or counter-clockwise.
-  // I think we can track the "curvature" (sum of diff between angles)
-  // and it should add up to one or the other?
-  // Belt.Array.mapWithIndex((i, shape) => {
-  //   let prev = ordered[i == 0 ? ln - 1 : i - 1];
-  //   let next = ordered[i == ln - 1 ? 0 : i + 1];
+          };
+        })
+      ->Belt.Array.keepMap(x => x);
+    // Js.log("reversed");
+    // getWind(ordered->Belt.Array.reverse);
+    // ok, gotta find out the winding direction.
+    // like, are we going clockwise or counter-clockwise.
+    // I think we can track the "curvature" (sum of diff between angles)
+    // and it should add up to one or the other?
+    // Belt.Array.mapWithIndex((i, shape) => {
+    //   let prev = ordered[i == 0 ? ln - 1 : i - 1];
+    //   let next = ordered[i == ln - 1 ? 0 : i + 1];
 
-  // })
-  // ordered;
-  // pushed;
-  // _endPoints->Belt.Array.map(((p1, p2)) => CLine({p1, p2}));
-  clipped;
+    // })
+    // ordered;
+    // pushed;
+    clipped;
+  };
 };

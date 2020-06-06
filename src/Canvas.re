@@ -20,54 +20,57 @@ let force = x =>
   | Some(x) => x
   };
 
-let polyPath = (transform, items, margin) => {
+let polyPath = (transform, items, margin, debug) => {
   let ordered = PolyLine.orderItems(items);
   let ordered = PolyLine.joinAdjacentLineSegments(ordered);
-  let ordered = margin == 0. ? ordered : PolyLine.inset(ordered, margin);
+  let ordered =
+    margin == 0. ? ordered : PolyLine.inset(ordered, margin, debug);
 
   // Js.log2("Ordered", ordered);
 
-  ordered
-  ->Belt.List.fromArray
-  ->Belt.List.mapWithIndex((i, shape) => {
-      let (startp, endp) = Calculate.endPoints(shape);
-      (
-        i == 0
-          ? Printf.sprintf(
-              "M %0.2f %0.2f ",
-              tx(startp.x, transform),
-              ty(startp.y, transform),
+  let res =
+    ordered
+    ->Belt.List.fromArray
+    ->Belt.List.mapWithIndex((i, shape) => {
+        let (startp, endp) = Calculate.endPoints(shape);
+        (
+          i == 0
+            ? Printf.sprintf(
+                "M %0.2f %0.2f ",
+                tx(startp.x, transform),
+                ty(startp.y, transform),
+              )
+            : ""
+        )
+        ++ (
+          switch (shape) {
+          | CLine({p2}) =>
+            Printf.sprintf(
+              "L %0.2f %0.2f",
+              tx(p2.x, transform),
+              ty(p2.y, transform),
             )
-          : ""
-      )
-      ++ (
-        switch (shape) {
-        | CLine({p2}) =>
-          Printf.sprintf(
-            "L %0.2f %0.2f",
-            tx(p2.x, transform),
-            ty(p2.y, transform),
-          )
-        | CCirclePart({r, theta0, theta1, clockwise}) =>
-          let sweep = normalizeTheta(theta1 -. theta0) > Js.Math._PI;
-          let sweep = clockwise ? sweep : !sweep;
-          Printf.sprintf(
-            {|A %0.2f %0.2f
+          | CCirclePart({r, theta0, theta1, clockwise}) =>
+            let sweep = normalizeTheta(theta1 -. theta0) > Js.Math._PI;
+            let sweep = clockwise ? sweep : !sweep;
+            Printf.sprintf(
+              {|A %0.2f %0.2f
           0
           %d %d
           %0.2f %0.2f|},
-            tf(r, transform),
-            tf(r, transform),
-            sweep ? 1 : 0,
-            clockwise ? 1 : 0,
-            tx(endp.x, transform),
-            ty(endp.y, transform),
-          );
-        | CCircle(_) => ""
-        }
-      );
-    })
-  |> String.concat(" ");
+              tf(r, transform),
+              tf(r, transform),
+              sweep ? 1 : 0,
+              clockwise ? 1 : 0,
+              tx(endp.x, transform),
+              ty(endp.y, transform),
+            );
+          | CCircle(_) => ""
+          }
+        );
+      })
+    |> String.concat(" ");
+  res ++ "z";
 };
 
 module Shape = {
@@ -336,7 +339,7 @@ let make =
            <path
              key={toId(k)}
              fill=color
-             d={polyPath(transform, sides, margin)}
+             d={polyPath(transform, sides, margin, false)}
              onClick={_ => selectTile(k)}
              stroke={isTileSelected(selection, k) ? "black" : "green"}
              strokeWidth={isTileSelectedOrHovered(selection, k) ? "3" : "0"}
@@ -357,7 +360,7 @@ let make =
            <path
              key={string_of_int(i)}
              fill=color
-             d={polyPath(transform, fullSides, margin)}
+             d={polyPath(transform, fullSides, margin, false)}
              //  onClick={_ => selectTile(k)}
              onClick={_ => {
                let (scene, k) = scene->Api.Tile.add(~sym, sides);
