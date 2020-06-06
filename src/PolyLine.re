@@ -1,6 +1,66 @@
 open Types;
 open Calculate;
 
+let almostEqual = (p1, p2) =>
+  abs_float(p1.x -. p2.x) < 0.001 && abs_float(p1.y -. p2.y) < 0.001;
+
+let findMap = (arr, fn) => {
+  let rec loop = i =>
+    if (i >= Array.length(arr)) {
+      None;
+    } else {
+      let item = arr[i];
+      switch (fn(item)) {
+      | None => loop(i + 1)
+      | Some(v) => Some((v, i))
+      };
+    };
+  loop(0);
+};
+
+let orderItems = items => {
+  let pool = Belt.List.toArray(items);
+  let ordered = [||];
+
+  /**
+   * how to sort things?
+   * pick one.
+   * go through until you fine the one at its tail
+   * flip that if needed
+   * keep going
+   */
+  let rec loop = endp =>
+    if (Array.length(pool) == 0) {
+      ();
+    } else {
+      let found =
+        pool->findMap(shape => {
+          let (astartp, aendp) = Calculate.endPoints(shape);
+          if (almostEqual(astartp, endp)) {
+            Some((shape, aendp));
+          } else if (almostEqual(aendp, endp)) {
+            Some((Calculate.flip(shape), astartp));
+          } else {
+            None;
+          };
+        });
+      switch (found) {
+      | None => ()
+      | Some(((shape, endp), idx)) =>
+        pool->Js.Array2.spliceInPlace(~pos=idx, ~remove=1, ~add=[||])->ignore;
+        ordered->Js.Array2.push(shape)->ignore;
+        loop(endp);
+      };
+    };
+
+  let first = pool->Js.Array2.pop->force;
+  let (_, endp) = Calculate.endPoints(first);
+  ordered->Js.Array2.push(first)->ignore;
+  loop(endp);
+
+  ordered;
+};
+
 // let debug = ref(false);
 // let log = (data) => {
 //   if (debug^) {
@@ -34,8 +94,8 @@ let getWind = ordered => {
         | CCirclePart({center, r, theta0, theta1, clockwise}) =>
           let p0 = push(center, ~theta=theta0, ~mag=r);
           let off = clockwise ? pi /. 50. : -. pi /. 50.;
-          let p1 = push(center, ~theta=theta0 +. off, ~mag=10.);
-          let p2 = push(center, ~theta=theta1 -. off, ~mag=10.);
+          let p1 = push(center, ~theta=theta0 +. off, ~mag=r);
+          let p2 = push(center, ~theta=theta1 -. off, ~mag=r);
           let p3 = push(center, ~theta=theta1, ~mag=r);
           [|(p0, p1), (p1, p2), (p2, p3)|];
         // [|(p0, p3)|];
@@ -51,7 +111,14 @@ let getWind = ordered => {
       insideAngle(angle -. prev);
     });
   let totalWind = diffs->Belt.Array.reduce(0., (+.));
-  totalWind;
+  Js.log4(
+    ordered,
+    endPoints,
+    angles->Belt.Array.map(Calculate.toDegrees),
+    diffs->Belt.Array.map(Calculate.toDegrees),
+  );
+  Js.log2("Total", totalWind);
+  (endPoints, totalWind);
 };
 
 let xor = (a, b) => a ? b ? false : true : b;
@@ -64,6 +131,14 @@ let xor = (a, b) => a ? b ? false : true : b;
 let collideEndToEnd = (prev, next, clockwise) => {
   switch (prev, next) {
   | (CLine(l1), CLine(l2)) => intersection(l1.p1, l1.p2, l2.p1, l2.p2)
+  | (CCirclePart(c1), CCirclePart(c2)) =>
+    switch (intersectCircles(c1.center, c1.r, c2.center, c2.r)) {
+    | [p0, p1] =>
+      // Cases:
+      // c1
+      Some(xor(clockwise, c1.clockwise) ? p0 : p1)
+    | _ => None
+    }
   | (CLine(l1), CCirclePart({center, r} as c1)) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
@@ -143,7 +218,8 @@ let inset = (ordered, margin) => {
   // the right (if it's going up)
   // so, theta +. pi /. 2.
   /// Otherwise, push it theta -. pi /. 2.
-  let clockwise = getWind(ordered) > 0.;
+  let (_endPoints, wind) = getWind(ordered);
+  let clockwise = wind > 0.;
   let pushed =
     ordered->Belt.Array.map(shape =>
       switch (shape) {
@@ -160,8 +236,8 @@ let inset = (ordered, margin) => {
       // erg there's definitely a case where I want the radius to increase.
       // if the way we're going is the opposite of the clockwised-ness of the arc, I think.
       | CCirclePart(c1) =>
-        let dir =
-          clockwise ? c1.clockwise ? (-1.) : 1. : c1.clockwise ? 1. : (-1.);
+        let dir = xor(clockwise, c1.clockwise) ? 1. : (-1.);
+        // clockwise ? c1.clockwise ? (-1.) : 1. : c1.clockwise ? 1. : (-1.);
         CCirclePart({
           ...c1,
           r:
@@ -221,5 +297,6 @@ let inset = (ordered, margin) => {
   // })
   // ordered;
   // pushed;
+  // _endPoints->Belt.Array.map(((p1, p2)) => CLine({p1, p2}));
   clipped;
 };

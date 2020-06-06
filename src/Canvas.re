@@ -14,77 +14,15 @@ let s = Js.Float.toString;
 
 let normalizeTheta = t => t < 0. ? Js.Math._PI *. 2. +. t : t;
 
-let almostEqual = (p1, p2) =>
-  abs_float(p1.x -. p2.x) < 0.001 && abs_float(p1.y -. p2.y) < 0.001;
-
 let force = x =>
   switch (x) {
   | None => failwith("unwrapped empty")
   | Some(x) => x
   };
 
-let findMap = (arr, fn) => {
-  let rec loop = i =>
-    if (i >= Array.length(arr)) {
-      None;
-    } else {
-      let item = arr[i];
-      switch (fn(item)) {
-      | None => loop(i + 1)
-      | Some(v) => Some((v, i))
-      };
-    };
-  loop(0);
-};
-
-let orderItems = items => {
-  let pool = Belt.List.toArray(items);
-  let ordered = [||];
-
-  /**
-   * how to sort things?
-   * pick one.
-   * go through until you fine the one at its tail
-   * flip that if needed
-   * keep going
-   */
-  let rec loop = endp =>
-    if (Array.length(pool) == 0) {
-      ();
-    } else {
-      let found =
-        pool->findMap(shape => {
-          let (astartp, aendp) = Calculate.endPoints(shape);
-          if (almostEqual(astartp, endp)) {
-            Some((shape, aendp));
-          } else if (almostEqual(aendp, endp)) {
-            Some((Calculate.flip(shape), astartp));
-          } else {
-            None;
-          };
-        });
-      switch (found) {
-      | None => ()
-      | Some(((shape, endp), idx)) =>
-        pool->Js.Array2.spliceInPlace(~pos=idx, ~remove=1, ~add=[||])->ignore;
-        ordered->Js.Array2.push(shape)->ignore;
-        loop(endp);
-      };
-    };
-
-  let first = pool->Js.Array2.pop->force;
-  let (_, endp) = Calculate.endPoints(first);
-  ordered->Js.Array2.push(first)->ignore;
-  loop(endp);
-
-  ordered;
-};
-
 let polyPath = (transform, items, margin) => {
-  let ordered = orderItems(items);
-
+  let ordered = PolyLine.orderItems(items);
   let ordered = PolyLine.joinAdjacentLineSegments(ordered);
-
   let ordered = margin == 0. ? ordered : PolyLine.inset(ordered, margin);
 
   // Js.log2("Ordered", ordered);

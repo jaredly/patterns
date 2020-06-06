@@ -95,7 +95,7 @@ let potentials = (scene: scene, selection: selection, positions) =>
 
               `Tile({
                 color: "red",
-                margin: 2.,
+                margin: 0.,
                 order: 0.,
                 sides: shapes,
                 sym,
