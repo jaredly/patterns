@@ -81,6 +81,7 @@ let make = (~which) => {
     [|
       twoCircles({x: 40., y: 40.}, 50., {x: 100., y: 100.}, 75.),
       twoCircles({x: 70., y: 70.}, 50., {x: 100., y: 100.}, 75.),
+      twoCircles({x: 50., y: 50.}, 50., {x: 100., y: 100.}, 50.),
       {
         let p0 = {x: 30., y: 30.};
         let p4 = {x: 110., y: 110.};
@@ -223,21 +224,21 @@ let make = (~which) => {
                  ])
                )
              />
-             <path
-               fill="transparent"
-               d={Canvas.polyPath({center, zoom: 1.}, sides, 5., true)}
-               stroke="green"
-               strokeWidth="10"
-               className=Css.(
-                 style([
-                   cursor(`pointer),
-                   opacity(0.5),
-                   //  hover([
-                   //  ])
-                 ])
-               )
-             />
            </React.Fragment>;
+           //  <path
+           //    fill="transparent"
+           //    d={Canvas.polyPath({center, zoom: 1.}, sides, 5., true)}
+           //    stroke="green"
+           //    strokeWidth="10"
+           //    className=Css.(
+           //      style([
+           //        cursor(`pointer),
+           //        opacity(0.5),
+           //        //  hover([
+           //        //  ])
+           //      ])
+           //    )
+           //  />
          })
        ->React.array}
     </svg>
