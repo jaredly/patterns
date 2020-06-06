@@ -22,6 +22,7 @@ let twoCircles = (c1, r1, c2, r2) => {
           clockwise: true,
         }),
       ],
+      //
       [
         CCirclePart({
           center: c1,
@@ -38,6 +39,7 @@ let twoCircles = (c1, r1, c2, r2) => {
           clockwise: true,
         }),
       ],
+      //
       [
         CCirclePart({
           center: c1,
@@ -45,6 +47,23 @@ let twoCircles = (c1, r1, c2, r2) => {
           theta0: angleTo(dpos(c1, p1)),
           theta1: angleTo(dpos(c1, p2)),
           clockwise: false,
+        }),
+        CCirclePart({
+          center: c2,
+          r: r2,
+          theta0: angleTo(dpos(c2, p1)),
+          theta1: angleTo(dpos(c2, p2)),
+          clockwise: false,
+        }),
+      ],
+      //
+      [
+        CCirclePart({
+          center: c1,
+          r: r1,
+          theta0: angleTo(dpos(c1, p1)),
+          theta1: angleTo(dpos(c1, p2)),
+          clockwise: true,
         }),
         CCirclePart({
           center: c2,
@@ -65,24 +84,56 @@ let twoCircles = (c1, r1, c2, r2) => {
         CCirclePart({
           center: c2,
           r: r2,
-          theta0: angleTo(dpos(c2, p1)),
-          theta1: angleTo(dpos(c2, p2)),
+          theta1: angleTo(dpos(c2, p1)),
+          theta0: angleTo(dpos(c2, p2)),
           clockwise: false,
         }),
       ],
       [
         CCirclePart({
-          center: c2,
-          r: r2,
-          theta0: angleTo(dpos(c2, p1)),
-          theta1: angleTo(dpos(c2, p2)),
+          center: c1,
+          r: r1,
+          theta0: angleTo(dpos(c1, p1)),
+          theta1: angleTo(dpos(c1, p2)),
           clockwise: false,
         }),
+        CCirclePart({
+          center: c2,
+          r: r2,
+          theta1: angleTo(dpos(c2, p1)),
+          theta0: angleTo(dpos(c2, p2)),
+          clockwise: false,
+        }),
+      ],
+      [
         CCirclePart({
           center: c1,
           r: r1,
           theta0: angleTo(dpos(c1, p1)),
           theta1: angleTo(dpos(c1, p2)),
+          clockwise: false,
+        }),
+        CCirclePart({
+          center: c2,
+          r: r2,
+          theta1: angleTo(dpos(c2, p1)),
+          theta0: angleTo(dpos(c2, p2)),
+          clockwise: true,
+        }),
+      ],
+      [
+        CCirclePart({
+          center: c1,
+          r: r1,
+          theta0: angleTo(dpos(c1, p1)),
+          theta1: angleTo(dpos(c1, p2)),
+          clockwise: true,
+        }),
+        CCirclePart({
+          center: c2,
+          r: r2,
+          theta0: angleTo(dpos(c2, p2)),
+          theta1: angleTo(dpos(c2, p1)),
           clockwise: true,
         }),
       ],
@@ -199,7 +250,7 @@ let make = (~which) => {
     | _ => tests
     };
 
-  let wrap = 5;
+  let wrap = 4;
   let w = 200.;
   let h = 200.;
 

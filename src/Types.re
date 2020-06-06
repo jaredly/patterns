@@ -199,10 +199,27 @@ type concreteShape =
       theta1: float,
       clockwise: bool,
     }); // t0 to t1 is "start to end", but we need to know if we're going clockwise or counterclockwise... I think
-// | CPoly({
-//     p0: pos,
-//     items: list([ | `Line(pos) | `Arc(ccirclePart)]),
-//   });
+
+let showPos = ({x, y}) => Printf.sprintf("(%0.2f, %0.2f)", x, y);
+
+let toDegrees = f => f /. Js.Math._PI *. 180.;
+
+let showConcreteShape = shape =>
+  switch (shape) {
+  | CLine({p1, p2}) =>
+    Printf.sprintf("Line {%s, %s}", showPos(p1), showPos(p2))
+  | CCircle({center, r}) =>
+    Printf.sprintf("Circle {%s, r: %0.2f}", showPos(center), r)
+  | CCirclePart({center, r, theta0, theta1, clockwise}) =>
+    Printf.sprintf(
+      "CirclePart {%s, %0.2f, from: %0.1f, to: %0.1f, %s)",
+      showPos(center),
+      r,
+      toDegrees(theta0),
+      toDegrees(theta1),
+      clockwise ? "clockwise" : "counter-clockwise",
+    )
+  };
 
 type lineOpts = {
   p1: reference,

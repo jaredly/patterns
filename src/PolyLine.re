@@ -134,11 +134,28 @@ let collideEndToEnd = (prev, next, clockwise) => {
       // } else {
       //   // it's a "softer" angle
       // }
-      switch (c1.clockwise, c2.clockwise, clockwise, angleDiff > 0.) {
-      // | (true, true, true, true) => Some(p1)
-      // | (false, false, _, _) => Some(p1)
-      | _ => Some(p0)
-      };
+      // Some(clockwise && c1.clockwise && c2.clockwise ? p1 : p0);
+      // // START HERE!!! If we return p1 then the last one is correct and all others are wrong..
+      // Js.log((
+      //   c1.clockwise,
+      //   c2.clockwise,
+      //   normalizeTheta(angleDiff),
+      //   clockwise,
+      // ));
+      // Some(angleDiff > pi || angleDiff < -. pi ? p1 : p0);
+      // Some(p0);
+      // Ughhhhh I have no idea why this would work....
+      Some(
+        // clockwise
+        // && c1.clockwise
+        // && c2.clockwise
+        normalizeTheta(angleDiff) > 0. ? p1 : p0,
+      );
+    // switch (c1.clockwise, c2.clockwise, clockwise, angleDiff > 0.) {
+    // // | (true, true, true, true) => Some(p1)
+    // // | (false, false, _, _) => Some(p1)
+    // | _ => Some(p0)
+    // };
     // if (abs_float(angleDiff) < 0.01) {
     //   // the circles are tangent.
     //   ()
@@ -295,19 +312,6 @@ let inset = (ordered, margin, debug) => {
               let theta0 = angleTo(dpos(c1.center, prev));
               let theta1 = angleTo(dpos(c1.center, next));
 
-              let theta1 =
-                if (c1.theta1 > c1.theta0) {
-                  if (theta1 > theta0) {
-                    theta1;
-                  } else {
-                    theta1 +. tau;
-                  };
-                } else if (theta1 > theta0) {
-                  theta1 -. tau;
-                } else {
-                  theta1;
-                };
-
               Some(CCirclePart({...c1, theta0, theta1}));
             | _ => None
             }
@@ -328,6 +332,21 @@ let inset = (ordered, margin, debug) => {
     // })
     // ordered;
     // pushed;
+    Js.log(
+      ordered->Belt.Array.map(Types.showConcreteShape)
+      |> Array.to_list
+      |> String.concat(" -> "),
+    );
+    Js.log(
+      pushed->Belt.Array.map(Types.showConcreteShape)
+      |> Array.to_list
+      |> String.concat(" -> "),
+    );
+    Js.log(
+      clipped->Belt.Array.map(Types.showConcreteShape)
+      |> Array.to_list
+      |> String.concat(" -> "),
+    );
     clipped;
   };
 };
