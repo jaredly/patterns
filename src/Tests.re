@@ -70,6 +70,22 @@ let twoCircles = (c1, r1, c2, r2) => {
           clockwise: false,
         }),
       ],
+      [
+        CCirclePart({
+          center: c2,
+          r: r2,
+          theta0: angleTo(dpos(c2, p1)),
+          theta1: angleTo(dpos(c2, p2)),
+          clockwise: false,
+        }),
+        CCirclePart({
+          center: c1,
+          r: r1,
+          theta0: angleTo(dpos(c1, p1)),
+          theta1: angleTo(dpos(c1, p2)),
+          clockwise: true,
+        }),
+      ],
     ]
   | _ => assert(false)
   };
@@ -79,8 +95,8 @@ let twoCircles = (c1, r1, c2, r2) => {
 let make = (~which) => {
   let tests =
     [|
-      twoCircles({x: 40., y: 40.}, 50., {x: 100., y: 100.}, 75.),
-      twoCircles({x: 70., y: 70.}, 50., {x: 100., y: 100.}, 75.),
+      twoCircles({x: 50., y: 50.}, 40., {x: 100., y: 100.}, 65.),
+      twoCircles({x: 80., y: 80.}, 60., {x: 110., y: 110.}, 75.),
       twoCircles({x: 50., y: 50.}, 50., {x: 100., y: 100.}, 50.),
       {
         let p0 = {x: 30., y: 30.};
@@ -137,42 +153,42 @@ let make = (~which) => {
           ]
         };
       },
-      {
-        [
-          [
-            CCirclePart({
-              center: {
-                x: 100.,
-                y: 100.,
-              },
-              r: 50.,
-              theta0: 0.,
-              theta1: pi2,
-              clockwise: true,
-            }),
-            CCirclePart({
-              center: {
-                x: 125.,
-                y: 100.,
-              },
-              r: 25.,
-              theta0: 0.,
-              theta1: pi2,
-              clockwise: true,
-            }),
-            CLine({
-              p1: {
-                x: 125.,
-                y: 50.,
-              },
-              p2: {
-                x: 100.,
-                y: 50.,
-              },
-            }),
-          ],
-        ];
-      },
+      // {
+      //   [
+      //     [
+      //       CCirclePart({
+      //         center: {
+      //           x: 100.,
+      //           y: 100.,
+      //         },
+      //         r: 50.,
+      //         theta0: 0.,
+      //         theta1: pi2,
+      //         clockwise: true,
+      //       }),
+      //       CCirclePart({
+      //         center: {
+      //           x: 125.,
+      //           y: 100.,
+      //         },
+      //         r: 25.,
+      //         theta0: 0.,
+      //         theta1: pi2,
+      //         clockwise: true,
+      //       }),
+      //       CLine({
+      //         p1: {
+      //           x: 125.,
+      //           y: 50.,
+      //         },
+      //         p2: {
+      //           x: 100.,
+      //           y: 50.,
+      //         },
+      //       }),
+      //     ],
+      //   ];
+      // },
     |]
     ->Belt.List.concatMany
     ->Array.of_list;
@@ -183,6 +199,10 @@ let make = (~which) => {
     | _ => tests
     };
 
+  let wrap = 5;
+  let w = 200.;
+  let h = 200.;
+
   <div>
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -191,8 +211,8 @@ let make = (~which) => {
       {tests
        ->Belt.Array.mapWithIndex((i, sides) => {
            let center = {
-             x: (-50.) -. float_of_int(i mod 4) *. 200.,
-             y: (-50.) -. float_of_int(i / 4) *. 200.,
+             x: -. float_of_int(i mod wrap) *. w,
+             y: -. float_of_int(i / wrap) *. h,
            };
 
            <React.Fragment key={string_of_int(i)}>
@@ -224,21 +244,21 @@ let make = (~which) => {
                  ])
                )
              />
+             <path
+               fill="transparent"
+               d={Canvas.polyPath({center, zoom: 1.}, sides, 5., true)}
+               stroke="green"
+               strokeWidth="10"
+               className=Css.(
+                 style([
+                   cursor(`pointer),
+                   opacity(0.5),
+                   //  hover([
+                   //  ])
+                 ])
+               )
+             />
            </React.Fragment>;
-           //  <path
-           //    fill="transparent"
-           //    d={Canvas.polyPath({center, zoom: 1.}, sides, 5., true)}
-           //    stroke="green"
-           //    strokeWidth="10"
-           //    className=Css.(
-           //      style([
-           //        cursor(`pointer),
-           //        opacity(0.5),
-           //        //  hover([
-           //        //  ])
-           //      ])
-           //    )
-           //  />
          })
        ->React.array}
     </svg>

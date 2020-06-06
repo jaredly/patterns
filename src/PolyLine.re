@@ -136,7 +136,7 @@ let collideEndToEnd = (prev, next, clockwise) => {
       // }
       switch (c1.clockwise, c2.clockwise, clockwise, angleDiff > 0.) {
       // | (true, true, true, true) => Some(p1)
-      | (true, true, true, false) => Some(p0)
+      // | (false, false, _, _) => Some(p1)
       | _ => Some(p0)
       };
     // if (abs_float(angleDiff) < 0.01) {
