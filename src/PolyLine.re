@@ -105,14 +105,9 @@ let getWind = ordered => {
           let p0 = push(center, ~theta=theta0, ~mag=r);
           let span = angleBetween(theta0, theta1, clockwise);
           let thetaMid = theta0 +. span /. 2.;
-          // let off = pi /. 10.;
-          // let off = clockwise ? off : -. off;
-          // let p1 = push(center, ~theta=theta0 +. off, ~mag=r);
-          // let p2 = push(center, ~theta=theta1 -. off, ~mag=r);
           let p1 = push(center, ~theta=thetaMid, ~mag=r);
           let p2 = push(center, ~theta=theta1, ~mag=r);
           [|(p0, p1), (p1, p2)|];
-        // [|(p0, p3)|];
         | CCircle(_) => assert(false)
         }
       )
@@ -122,18 +117,10 @@ let getWind = ordered => {
   let diffs =
     angles->Belt.Array.mapWithIndex((i, angle) => {
       let prev = angles[i == 0 ? ln - 1 : i - 1];
-      // angleBetween(prev, angle, true);
       insideAngle(angle -. prev);
     });
   let totalWind = diffs->Belt.Array.reduce(0., (+.));
-  let avgDiff = totalWind /. float_of_int(Array.length(diffs));
-  // Js.log4(
-  //   ordered,
-  //   endPoints,
-  //   angles->Belt.Array.map(Calculate.toDegrees),
-  //   diffs->Belt.Array.map(Calculate.toDegrees),
-  // );
-  Js.log2("Total", totalWind);
+  // Js.log2("Total", totalWind);
   (endPoints, totalWind > 0.);
 };
 

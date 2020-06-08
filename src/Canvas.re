@@ -75,8 +75,6 @@ let shapeDebugPoints = (transform, shape) =>
     let p1 = Calculate.push(center, ~theta=theta0, ~mag=r);
     let p2 = Calculate.push(center, ~theta=theta1, ~mag=r);
     let span = PolyLine.angleBetween(theta0, theta1, clockwise);
-    // let span = theta1 -. theta0;
-    // let span = span > 0. != clockwise ? Calculate.tau -. span : span;
     let thetaMid = theta0 +. span /. 2.;
     [
       square(tp(p1, transform)),
