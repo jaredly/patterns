@@ -211,10 +211,10 @@ let lineCircle = (center, r, p1, p2) => {
     ->force;
 
   let dist = dist(dpos(closestPoint, center));
-  if (dist > r) {
-    [];
-  } else if (abs_float(dist -. r) < 0.001) {
+  if (abs_float(dist -. r) < 0.001) {
     [closestPoint];
+  } else if (dist > r) {
+    [];
   } else {
     let otherSide = sqrt(r *. r -. dist *. dist);
     [

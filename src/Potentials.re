@@ -29,7 +29,7 @@ let potentials = (scene: scene, selection: selection, positions) =>
           ]
         }
       };
-    | {points: [p2, p1], tiles: [], shapes: []} =>
+    | {points: [p2, p1]} =>
       let {pos: _, sym} = S.getExn(scene.points, p1.id);
       let {pos: _, sym: sym2} = S.getExn(scene.points, p2.id);
       let sym = bestSym(sym, sym2);
@@ -46,7 +46,7 @@ let potentials = (scene: scene, selection: selection, positions) =>
         }),
         `Point({sym, pos: Rotate({source: p1, dest: p2, theta: pi /. 2.})}),
       ];
-    | {points: [p3, p2, p1], tiles: [], shapes: []} =>
+    | {points: [p3, p2, p1]} =>
       let {pos: _, sym} = S.getExn(scene.points, p1.id);
       let {pos: _, sym: sym2} = S.getExn(scene.points, p2.id);
       let {pos: _, sym: sym3} = S.getExn(scene.points, p3.id);
@@ -89,7 +89,7 @@ let potentials = (scene: scene, selection: selection, positions) =>
 
               `Tile({
                 color: "red",
-                margin: 0.,
+                margin: 2.,
                 order: 0.,
                 sides: shapes,
                 sym,

@@ -78,6 +78,12 @@ let constrain = (shapes, desired: bounds) => {
 };
 
 let cases = [
+  [CCirclePart({center: {x: 74.880081, y: -230.457192}, r: 52.105728, theta0: 2.755284, theta1: -2.642486, clockwise: true}),
+  CLine({p1: {x: 102.388606, y: -186.204645}, p2: {x: 26.614221, y: -210.825235}}),
+  CCirclePart({center: {x: 74.880081, y: -230.457192}, r: 52.105728, theta0: 0.144299, theta1: 1.014627, clockwise: true}),
+  CLine({p1: {x: 126.444275, y: -222.964476}, p2: {x: 117.557050, y: -161.803399}}),
+  CLine({p1: {x: 0.000000, y: -200.000000}, p2: {x: 117.557050, y: -161.803399}}),
+  CLine({p1: {x: 29.954549, y: -254.948039}, p2: {x: 0.000000, y: -200.000000}})],
   [
     CCirclePart({
       center: {

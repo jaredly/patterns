@@ -261,7 +261,10 @@ module Shape = {
                   ]),
                 ])
           )
-          onClick={_ => onSelect()}
+          onClick={evt => {
+            evt->ReactEvent.Mouse.stopPropagation;
+            onSelect();
+          }}
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
           strokeWidth="6"
           stroke={
@@ -407,6 +410,10 @@ let make =
     xmlns="http://www.w3.org/2000/svg"
     ref={ReactDOMRe.Ref.domRef(innerRef)}
     width={string_of_int(width) ++ "px"}
+    onClick={evt => {
+      evt->ReactEvent.Mouse.stopPropagation;
+      setSelection(Types.emptySelection);
+    }}
     height={string_of_int(height) ++ "px"}>
     // {tiles->Js.Array2.sortInPlaceWith}
 
@@ -419,7 +426,8 @@ let make =
              key={toId(k)}
              fill=color
              d={polyPath(transform, sides, margin, false)}
-             onClick={_ => {
+             onClick={evt => {
+               evt->ReactEvent.Mouse.stopPropagation;
                selectTile(k);
                Js.log("OK SELECTED TILE");
                Js.log(
@@ -452,7 +460,8 @@ let make =
              fill=color
              d={polyPath(transform, fullSides, margin, false)}
              //  onClick={_ => selectTile(k)}
-             onClick={_ => {
+             onClick={evt => {
+               evt->ReactEvent.Mouse.stopPropagation;
                let (scene, k) = scene->Api.Tile.add(~sym, sides);
                setScene(scene);
                setSelection({
@@ -518,7 +527,8 @@ let make =
        ->Belt.Array.mapWithIndex((i, (point, pos)) =>
            <Point
              key={string_of_int(i)}
-             onClick={_ => {
+             onClick={evt => {
+               evt->ReactEvent.Mouse.stopPropagation;
                let (scene, k) =
                  scene->Api.Point.add(~sym=point.sym, point.pos);
                setScene(scene);
@@ -544,7 +554,10 @@ let make =
                <Point
                  key={toId(k)}
                  size=2
-                 onClick={_ => selectPoint(k)}
+                 onClick={evt => {
+                   evt->ReactEvent.Mouse.stopPropagation;
+                   selectPoint(k);
+                 }}
                  transform
                  pos
                  isSelected={isSelected(selection, k)}
