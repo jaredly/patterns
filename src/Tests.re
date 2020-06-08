@@ -571,6 +571,7 @@ let make = (~which) => {
              x: -. float_of_int(i mod wrap) *. w,
              y: -. float_of_int(i / wrap) *. h,
            };
+           let ordered = PolyLine.orderItems(sides);
 
            <React.Fragment key={string_of_int(i)}>
              <path
@@ -601,8 +602,8 @@ let make = (~which) => {
                  ])
                )
              />
-             {sides
-              ->Belt.List.toArray
+             {ordered
+              // ->Belt.List.toArray
               ->Belt.Array.map(shape =>
                   [
                     <path

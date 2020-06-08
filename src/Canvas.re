@@ -57,23 +57,6 @@ let square = (~r=4., {x, y}) =>
     height={Js.Float.toString(r *. 2.)}
   />;
 
-let angleBetween = (a, b, clockwise) => {
-  // now both are between 0 and Tau
-  let a = normalizeTheta(a);
-  let b = normalizeTheta(b);
-  if (clockwise) {
-    if (a > b) {
-      b +. Calculate.tau -. a;
-    } else {
-      b -. a;
-    };
-  } else if (b > a) {
-    b -. a -. Calculate.tau;
-  } else {
-    b -. a;
-  };
-};
-
 let dot = (~r=4., {x, y}) =>
   <circle
     cx={Js.Float.toString(x)}
@@ -91,7 +74,7 @@ let shapeDebugPoints = (transform, shape) =>
   | CCirclePart({center, r, theta0, theta1, clockwise}) =>
     let p1 = Calculate.push(center, ~theta=theta0, ~mag=r);
     let p2 = Calculate.push(center, ~theta=theta1, ~mag=r);
-    let span = angleBetween(theta0, theta1, clockwise);
+    let span = PolyLine.angleBetween(theta0, theta1, clockwise);
     // let span = theta1 -. theta0;
     // let span = span > 0. != clockwise ? Calculate.tau -. span : span;
     let thetaMid = theta0 +. span /. 2.;

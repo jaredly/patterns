@@ -76,6 +76,23 @@ let angleDiff = (one, two) => {
   abs_float(normalizeTheta(one) -. normalizeTheta(two));
 };
 
+let angleBetween = (a, b, clockwise) => {
+  // now both are between 0 and Tau
+  let a = normalizeTheta(a);
+  let b = normalizeTheta(b);
+  if (clockwise) {
+    if (a > b) {
+      b +. Calculate.tau -. a;
+    } else {
+      b -. a;
+    };
+  } else if (b > a) {
+    b -. a -. Calculate.tau;
+  } else {
+    b -. a;
+  };
+};
+
 /** Determine if we're going clockwise or counterclockwise */
 let getWind = ordered => {
   let ln = Array.length(ordered);
@@ -86,12 +103,15 @@ let getWind = ordered => {
         | CLine({p1, p2}) => [|(p1, p2)|]
         | CCirclePart({center, r, theta0, theta1, clockwise}) =>
           let p0 = push(center, ~theta=theta0, ~mag=r);
-          let off = pi /. 10.;
-          let off = clockwise ? off : -. off;
-          let p1 = push(center, ~theta=theta0 +. off, ~mag=r);
-          let p2 = push(center, ~theta=theta1 -. off, ~mag=r);
-          let p3 = push(center, ~theta=theta1, ~mag=r);
-          [|(p0, p1), (p1, p2), (p2, p3)|];
+          let span = angleBetween(theta0, theta1, clockwise);
+          let thetaMid = theta0 +. span /. 2.;
+          // let off = pi /. 10.;
+          // let off = clockwise ? off : -. off;
+          // let p1 = push(center, ~theta=theta0 +. off, ~mag=r);
+          // let p2 = push(center, ~theta=theta1 -. off, ~mag=r);
+          let p1 = push(center, ~theta=thetaMid, ~mag=r);
+          let p2 = push(center, ~theta=theta1, ~mag=r);
+          [|(p0, p1), (p1, p2)|];
         // [|(p0, p3)|];
         | CCircle(_) => assert(false)
         }
@@ -102,17 +122,19 @@ let getWind = ordered => {
   let diffs =
     angles->Belt.Array.mapWithIndex((i, angle) => {
       let prev = angles[i == 0 ? ln - 1 : i - 1];
+      // angleBetween(prev, angle, true);
       insideAngle(angle -. prev);
     });
   let totalWind = diffs->Belt.Array.reduce(0., (+.));
+  let avgDiff = totalWind /. float_of_int(Array.length(diffs));
   // Js.log4(
   //   ordered,
   //   endPoints,
   //   angles->Belt.Array.map(Calculate.toDegrees),
   //   diffs->Belt.Array.map(Calculate.toDegrees),
   // );
-  // Js.log2("Total", totalWind);
-  (endPoints, totalWind);
+  Js.log2("Total", totalWind);
+  (endPoints, totalWind > 0.);
 };
 
 let xor = (a, b) => a ? b ? false : true : b;
@@ -254,11 +276,11 @@ let inset = (ordered, margin, debug) => {
   // the right (if it's going up)
   // so, theta +. pi /. 2.
   /// Otherwise, push it theta -. pi /. 2.
-  let (endPoints, wind) = getWind(ordered);
+  let (endPoints, clockwise) = getWind(ordered);
   if (debug) {
     endPoints->Belt.Array.map(((p1, p2)) => CLine({p1, p2}));
   } else {
-    let clockwise = wind > 0.;
+    // let clockwise = wind < pi;
     let pushed =
       ordered->Belt.Array.map(shape =>
         switch (shape) {
