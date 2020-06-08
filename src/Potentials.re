@@ -129,6 +129,19 @@ let potentials = (scene: scene, selection: selection, positions) =>
               }),
             ]
           };
+        | [(_, s1, CCircle(c1)), (_, s2, CCirclePart(c2))]
+        | [(_, s2, CCirclePart(c2)), (_, s1, CCircle(c1))] =>
+          let cross = intersectCircles(c1.center, c1.r, c2.center, c2.r);
+          let sym = bestSym(s1.sym, s2.sym);
+          cross->Belt.List.map(point => {
+            `Point({sym, pos: Abs({x: point.x, y: point.y})})
+          });
+        | [(_, s1, CCirclePart(c1)), (_, s2, CCirclePart(c2))] =>
+          let cross = intersectCircles(c1.center, c1.r, c2.center, c2.r);
+          let sym = bestSym(s1.sym, s2.sym);
+          cross->Belt.List.map(point => {
+            `Point({sym, pos: Abs({x: point.x, y: point.y})})
+          });
         | [(_, s1, CCircle(c1)), (_, s2, CCircle(c2))] =>
           let cross = intersectCircles(c1.center, c1.r, c2.center, c2.r);
           let sym = bestSym(s1.sym, s2.sym);

@@ -200,24 +200,24 @@ type concreteShape =
       clockwise: bool,
     }); // t0 to t1 is "start to end", but we need to know if we're going clockwise or counterclockwise... I think
 
-let showPos = ({x, y}) => Printf.sprintf("(%0.2f, %0.2f)", x, y);
+let showPos = ({x, y}) => Printf.sprintf("{x: %0.6f, y: %0.6f}", x, y);
 
 let toDegrees = f => f /. Js.Math._PI *. 180.;
 
 let showConcreteShape = shape =>
   switch (shape) {
   | CLine({p1, p2}) =>
-    Printf.sprintf("Line {%s, %s}", showPos(p1), showPos(p2))
+    Printf.sprintf("CLine({p1: %s, p2: %s})", showPos(p1), showPos(p2))
   | CCircle({center, r}) =>
-    Printf.sprintf("Circle {%s, r: %0.2f}", showPos(center), r)
+    Printf.sprintf("CCircle({center: %s, r: %0.6f})", showPos(center), r)
   | CCirclePart({center, r, theta0, theta1, clockwise}) =>
     Printf.sprintf(
-      "CirclePart {%s, %0.2f, from: %0.1f, to: %0.1f, %s)",
+      "CCirclePart({center: %s, r: %0.6f, theta0: %0.6f, theta1: %0.6f, clockwise: %b})",
       showPos(center),
       r,
-      toDegrees(theta0),
-      toDegrees(theta1),
-      clockwise ? "clockwise" : "counter-clockwise",
+      theta0,
+      theta1,
+      clockwise,
     )
   };
 

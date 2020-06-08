@@ -511,6 +511,31 @@ let translateEverything = (scene: scene, rel) => {
   };
 };
 
+let transformPoint = (pos, translate, scale) => {
+  x: pos.x *. scale +. translate.x,
+  y: pos.y *. scale +. translate.y,
+};
+
+let transformConcrete = (shape, translate, scale) =>
+  switch (shape) {
+  | CLine({p1, p2}) =>
+    CLine({
+      p1: transformPoint(p1, translate, scale),
+      p2: transformPoint(p2, translate, scale),
+    })
+  | CCircle({center, r}) =>
+    CCircle({
+      center: transformPoint(center, translate, scale),
+      r: r *. scale,
+    })
+  | CCirclePart({center, r} as c) =>
+    CCirclePart({
+      ...c,
+      center: transformPoint(center, translate, scale),
+      r: r *. scale,
+    })
+  };
+
 let bestSym = (sym, sym2) =>
   switch (sym, sym2) {
   | (None, Some(x)) => Some(x)

@@ -9,6 +9,7 @@ module Colors = {
 let tx = (x, transform) => (x -. transform.center.x) *. transform.zoom;
 let ty = (y, transform) => (y -. transform.center.y) *. transform.zoom;
 let tf = (f, transform) => f *. transform.zoom;
+let tp = (p, transform) => {x: tx(p.x, transform), y: ty(p.y, transform)};
 
 let s = Js.Float.toString;
 
@@ -19,6 +20,128 @@ let force = x =>
   | None => failwith("unwrapped empty")
   | Some(x) => x
   };
+
+let arrow = (~r=8., pos, angle) => {
+  let p0 = Calculate.push(pos, ~theta=angle, ~mag=r);
+  let p1 =
+    Calculate.push(
+      pos,
+      ~theta=angle +. Calculate.pi /. 3. *. 2.,
+      ~mag=r /. 2.,
+    );
+  let p2 =
+    Calculate.push(
+      pos,
+      ~theta=angle -. Calculate.pi /. 3. *. 2.,
+      ~mag=r /. 2.,
+    );
+  <path
+    fill="blue"
+    d={Printf.sprintf(
+      "M %0.2f %0.2f L %0.2f %0.2f L %0.2f %0.2f Z",
+      p0.x,
+      p0.y,
+      p1.x,
+      p1.y,
+      p2.x,
+      p2.y,
+    )}
+  />;
+};
+
+let square = (~r=4., {x, y}) =>
+  <rect
+    x={Js.Float.toString(x -. r)}
+    y={Js.Float.toString(y -. r)}
+    width={Js.Float.toString(r *. 2.)}
+    height={Js.Float.toString(r *. 2.)}
+  />;
+
+let angleBetween = (a, b, clockwise) => {
+  // now both are between 0 and Tau
+  let a = normalizeTheta(a);
+  let b = normalizeTheta(b);
+  if (clockwise) {
+    if (a > b) {
+      b +. Calculate.tau -. a;
+    } else {
+      b -. a;
+    };
+  } else if (b > a) {
+    b -. a -. Calculate.tau;
+  } else {
+    b -. a;
+  };
+};
+
+let dot = (~r=4., {x, y}) =>
+  <circle
+    cx={Js.Float.toString(x)}
+    cy={Js.Float.toString(y)}
+    r={Js.Float.toString(r)}
+  />;
+
+let shapeDebugPoints = (transform, shape) =>
+  switch (shape) {
+  | CLine({p1, p2}) => [
+      square(tp(p1, transform)),
+      dot(tp(p2, transform)),
+    ]
+  | CCircle({center, r}) => [square(tp(center, transform))]
+  | CCirclePart({center, r, theta0, theta1, clockwise}) =>
+    let p1 = Calculate.push(center, ~theta=theta0, ~mag=r);
+    let p2 = Calculate.push(center, ~theta=theta1, ~mag=r);
+    let span = angleBetween(theta0, theta1, clockwise);
+    // let span = theta1 -. theta0;
+    // let span = span > 0. != clockwise ? Calculate.tau -. span : span;
+    let thetaMid = theta0 +. span /. 2.;
+    [
+      square(tp(p1, transform)),
+      dot(tp(p2, transform)),
+      arrow(
+        tp(Calculate.push(center, ~theta=thetaMid, ~mag=r), transform),
+        thetaMid +. (clockwise ? Calculate.pi2 : -. Calculate.pi2),
+      ),
+    ];
+  };
+
+let pathToShapeEnd = (transform, shape) => {
+  switch (shape) {
+  | CLine({p2}) =>
+    Printf.sprintf(
+      "L %0.2f %0.2f",
+      tx(p2.x, transform),
+      ty(p2.y, transform),
+    )
+  | CCirclePart({center, r, theta0, theta1, clockwise}) =>
+    let sweep = normalizeTheta(theta1 -. theta0) > Js.Math._PI;
+    let sweep = clockwise ? sweep : !sweep;
+    let endp = Calculate.push(center, ~theta=theta1, ~mag=r);
+    Printf.sprintf(
+      {|A %0.2f %0.2f
+          0
+          %d %d
+          %0.2f %0.2f|},
+      tf(r, transform),
+      tf(r, transform),
+      sweep ? 1 : 0,
+      clockwise ? 1 : 0,
+      tx(endp.x, transform),
+      ty(endp.y, transform),
+    );
+  | CCircle(_) => ""
+  };
+};
+
+let pathForShape = (transform, shape) => {
+  let (startp, _) = Calculate.endPoints(shape);
+  Printf.sprintf(
+    "M %0.2f %0.2f ",
+    tx(startp.x, transform),
+    ty(startp.y, transform),
+  )
+  ++ pathToShapeEnd(transform, shape);
+};
 
 let polyPath = (transform, items, margin, debug) => {
   let ordered = PolyLine.orderItems(items);
@@ -32,7 +155,7 @@ let polyPath = (transform, items, margin, debug) => {
     ordered
     ->Belt.List.fromArray
     ->Belt.List.mapWithIndex((i, shape) => {
-        let (startp, endp) = Calculate.endPoints(shape);
+        let (startp, _) = Calculate.endPoints(shape);
         (
           i == 0
             ? Printf.sprintf(
@@ -42,32 +165,7 @@ let polyPath = (transform, items, margin, debug) => {
               )
             : ""
         )
-        ++ (
-          switch (shape) {
-          | CLine({p2}) =>
-            Printf.sprintf(
-              "L %0.2f %0.2f",
-              tx(p2.x, transform),
-              ty(p2.y, transform),
-            )
-          | CCirclePart({r, theta0, theta1, clockwise}) =>
-            let sweep = normalizeTheta(theta1 -. theta0) > Js.Math._PI;
-            let sweep = clockwise ? sweep : !sweep;
-            Printf.sprintf(
-              {|A %0.2f %0.2f
-          0
-          %d %d
-          %0.2f %0.2f|},
-              tf(r, transform),
-              tf(r, transform),
-              sweep ? 1 : 0,
-              clockwise ? 1 : 0,
-              tx(endp.x, transform),
-              ty(endp.y, transform),
-            );
-          | CCircle(_) => ""
-          }
-        );
+        ++ pathToShapeEnd(transform, shape);
       })
     |> String.concat(" ");
   res ++ "z";
@@ -340,7 +438,18 @@ let make =
              key={toId(k)}
              fill=color
              d={polyPath(transform, sides, margin, false)}
-             onClick={_ => selectTile(k)}
+             onClick={_ => {
+               selectTile(k);
+               Js.log("OK SELECTED TILE");
+               Js.log(
+                 "["
+                 ++ (
+                   sides->Belt.List.map(showConcreteShape)
+                   |> String.concat(",\n  ")
+                 )
+                 ++ "]",
+               );
+             }}
              stroke={isTileSelected(selection, k) ? "black" : "green"}
              strokeWidth={isTileSelectedOrHovered(selection, k) ? "3" : "0"}
              className=Css.(

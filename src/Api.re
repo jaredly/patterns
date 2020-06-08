@@ -32,7 +32,7 @@ module Point = {
   let add = (scene, ~sym=None, pos) => {
     let point = {pos, sym};
     let id = genId();
-    Js.log(id);
+    // Js.log(id);
     ({...scene, points: S.set(scene.points, id, point)}, id);
   };
   let abs = (scene, ~sym=None, x, y) => add(scene, ~sym, Abs({x, y}));
@@ -70,7 +70,7 @@ module Tile = {
 
 module Shape = {
   let setColor = (scene, id, color) => {
-    Js.log2(id, S.keysToArray(scene.shapes));
+    // Js.log2(id, S.keysToArray(scene.shapes));
     let shape = scene.shapes->S.getExn(id);
     {...scene, shapes: scene.shapes->S.set(id, {...shape, color})};
   };

@@ -324,8 +324,10 @@ let force = x =>
   };
 
 let permalink = (scene: scene) => {
-  Js.log(scene);
-  Location.setHash(Serialize.serializeAnyToJson(scene)->Js.Json.stringify);
+  // Js.log(scene);
+  Location.setHash(
+    Serialize.serializeAnyToJson(scene)->Js.Json.stringify,
+  );
 };
 
 let getInitial = default => {

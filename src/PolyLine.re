@@ -105,13 +105,13 @@ let getWind = ordered => {
       insideAngle(angle -. prev);
     });
   let totalWind = diffs->Belt.Array.reduce(0., (+.));
-  Js.log4(
-    ordered,
-    endPoints,
-    angles->Belt.Array.map(Calculate.toDegrees),
-    diffs->Belt.Array.map(Calculate.toDegrees),
-  );
-  Js.log2("Total", totalWind);
+  // Js.log4(
+  //   ordered,
+  //   endPoints,
+  //   angles->Belt.Array.map(Calculate.toDegrees),
+  //   diffs->Belt.Array.map(Calculate.toDegrees),
+  // );
+  // Js.log2("Total", totalWind);
   (endPoints, totalWind);
 };
 
@@ -179,8 +179,8 @@ let collideEndToEnd = (prev, next, clockwise) => {
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
     | [] =>
-      Js.log("No collide!!!");
-      None;
+      // Js.log("No collide!!!");
+      None
     | [p] => Some(p)
     | [p1, _, p2] =>
       // let t1 = angleTo(dpos(center, p1));
@@ -332,21 +332,21 @@ let inset = (ordered, margin, debug) => {
     // })
     // ordered;
     // pushed;
-    Js.log(
-      ordered->Belt.Array.map(Types.showConcreteShape)
-      |> Array.to_list
-      |> String.concat(" -> "),
-    );
-    Js.log(
-      pushed->Belt.Array.map(Types.showConcreteShape)
-      |> Array.to_list
-      |> String.concat(" -> "),
-    );
-    Js.log(
-      clipped->Belt.Array.map(Types.showConcreteShape)
-      |> Array.to_list
-      |> String.concat(" -> "),
-    );
+    // Js.log(
+    //   ordered->Belt.Array.map(Types.showConcreteShape)
+    //   |> Array.to_list
+    //   |> String.concat(" -> "),
+    // );
+    // Js.log(
+    //   pushed->Belt.Array.map(Types.showConcreteShape)
+    //   |> Array.to_list
+    //   |> String.concat(" -> "),
+    // );
+    // Js.log(
+    //   clipped->Belt.Array.map(Types.showConcreteShape)
+    //   |> Array.to_list
+    //   |> String.concat(" -> "),
+    // );
     clipped;
   };
 };
