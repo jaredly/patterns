@@ -130,8 +130,6 @@ let polyPath = (transform, items, margin, debug) => {
   let ordered =
     margin == 0. ? ordered : PolyLine.inset(ordered, margin, debug);
 
-  // Js.log2("Ordered", ordered);
-
   let res =
     ordered
     ->Belt.List.fromArray
@@ -256,7 +254,7 @@ module Shape = {
                   hover([
                     unsafe(
                       "stroke",
-                      isHovered ? "rgb(50, 180, 230" : "rgb(100, 220, 255)",
+                      isHovered ? "rgb(50, 180, 230)" : "rgb(100, 220, 255)",
                     ),
                   ]),
                 ])
@@ -267,11 +265,7 @@ module Shape = {
           }}
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
           strokeWidth="6"
-          stroke={
-            isSelected
-              ? "rgb(0, 255, 0)"
-              : isHovered ? "rgba(100, 220, 255)" : "rgba(0,0,0,0)"
-          }
+          stroke={isSelected ? "rgb(0, 255, 0)" : "rgba(0,0,0,0)"}
         />
         <Inner
           shape
@@ -287,7 +281,7 @@ module Shape = {
             )
           )
           style={ReactDOMRe.Style.make(~cursor="pointer", ())}
-          strokeWidth={isSelected ? "4" : "2"}
+          strokeWidth={isSelected || isHovered ? "4" : "2"}
           stroke={
             switch (color) {
             | None => "rgb(255, 0, 255)"

@@ -77,68 +77,217 @@ let constrain = (shapes, desired: bounds) => {
   };
 };
 
-let cases = [
-  [CCirclePart({center: {x: 74.880081, y: -230.457192}, r: 52.105728, theta0: 2.755284, theta1: -2.642486, clockwise: true}),
-  CLine({p1: {x: 102.388606, y: -186.204645}, p2: {x: 26.614221, y: -210.825235}}),
-  CCirclePart({center: {x: 74.880081, y: -230.457192}, r: 52.105728, theta0: 0.144299, theta1: 1.014627, clockwise: true}),
-  CLine({p1: {x: 126.444275, y: -222.964476}, p2: {x: 117.557050, y: -161.803399}}),
-  CLine({p1: {x: 0.000000, y: -200.000000}, p2: {x: 117.557050, y: -161.803399}}),
-  CLine({p1: {x: 29.954549, y: -254.948039}, p2: {x: 0.000000, y: -200.000000}})],
+let cases =
   [
-    CCirclePart({
-      center: {
-        x: (-0.000000),
-        y: (-200.000000),
-      },
-      r: 286.985504,
-      theta0: 1.143161,
-      theta1: 1.364523,
-      clockwise: true,
-    }),
-    CCirclePart({
-      center: {
-        x: (-190.211303),
-        y: (-61.803399),
-      },
-      r: 286.985504,
-      theta0: 0.520432,
-      theta1: 0.741795,
-      clockwise: true,
-    }),
-    CCirclePart({
-      center: {
-        x: 263.156875,
-        y: (-85.504852),
-      },
-      r: 325.279786,
-      theta0: 1.884956,
-      theta1: 2.408812,
-      clockwise: true,
-    }),
-    CCirclePart({
-      center: {
-        x: (-162.639893),
-        y: 223.854608,
-      },
-      r: 325.279786,
-      theta0: (-0.523856),
-      theta1: (-0.000000),
-      clockwise: true,
-    }),
-  ],
-];
-// ->Belt.List.map(shapes =>
-//     constrain(shapes, {
-//                         tl: {
-//                           x: 0.,
-//                           y: 0.,
-//                         },
-//                         br: {
-//                           x: 200.,
-//                           y: 200.,
-//                         },
-//                       })
-//   );
+    [
+      CLine({
+        p1: {
+          x: 157.735027,
+          y: (-42.264973),
+        },
+        p2: {
+          x: 200.000000,
+          y: 0.000000,
+        },
+      }),
+      CLine({
+        p1: {
+          x: 157.735027,
+          y: (-42.264973),
+        },
+        p2: {
+          x: 173.205081,
+          y: (-100.000000),
+        },
+      }),
+      CCirclePart({
+        center: {
+          x: (-0.000000),
+          y: (-200.000000),
+        },
+        r: 200.000000,
+        theta0: (-0.000000),
+        theta1: 0.523599,
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: 100.000000,
+          y: (-173.205081),
+        },
+        r: 200.000000,
+        theta0: 0.523599,
+        theta1: 1.047198,
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: 200.000000,
+          y: 0.000000,
+        },
+        r: 200.000000,
+        theta0: (-1.570796),
+        theta1: (-1.047198),
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: 100.000000,
+          y: (-173.205081),
+        },
+        r: 200.000000,
+        theta0: (-0.523599),
+        theta1: (-0.000000),
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: 173.205081,
+          y: 100.000000,
+        },
+        r: 200.000000,
+        theta0: (-1.047198),
+        theta1: (-0.523599),
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: 173.205081,
+          y: (-100.000000),
+        },
+        r: 200.000000,
+        theta0: 0.000000,
+        theta1: 0.523599,
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: 173.205081,
+          y: (-100.000000),
+        },
+        r: 200.000000,
+        theta0: (-1.047198),
+        theta1: (-0.000000),
+        clockwise: true,
+      }),
+    ],
+    [
+      CCirclePart({
+        center: {
+          x: 74.880081,
+          y: (-230.457192),
+        },
+        r: 52.105728,
+        theta0: 2.755284,
+        theta1: (-2.642486),
+        clockwise: true,
+      }),
+      CLine({
+        p1: {
+          x: 102.388606,
+          y: (-186.204645),
+        },
+        p2: {
+          x: 26.614221,
+          y: (-210.825235),
+        },
+      }),
+      CCirclePart({
+        center: {
+          x: 74.880081,
+          y: (-230.457192),
+        },
+        r: 52.105728,
+        theta0: 0.144299,
+        theta1: 1.014627,
+        clockwise: true,
+      }),
+      CLine({
+        p1: {
+          x: 126.444275,
+          y: (-222.964476),
+        },
+        p2: {
+          x: 117.557050,
+          y: (-161.803399),
+        },
+      }),
+      CLine({
+        p1: {
+          x: 0.000000,
+          y: (-200.000000),
+        },
+        p2: {
+          x: 117.557050,
+          y: (-161.803399),
+        },
+      }),
+      CLine({
+        p1: {
+          x: 29.954549,
+          y: (-254.948039),
+        },
+        p2: {
+          x: 0.000000,
+          y: (-200.000000),
+        },
+      }),
+    ],
+    [
+      CCirclePart({
+        center: {
+          x: (-0.000000),
+          y: (-200.000000),
+        },
+        r: 286.985504,
+        theta0: 1.143161,
+        theta1: 1.364523,
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: (-190.211303),
+          y: (-61.803399),
+        },
+        r: 286.985504,
+        theta0: 0.520432,
+        theta1: 0.741795,
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: 263.156875,
+          y: (-85.504852),
+        },
+        r: 325.279786,
+        theta0: 1.884956,
+        theta1: 2.408812,
+        clockwise: true,
+      }),
+      CCirclePart({
+        center: {
+          x: (-162.639893),
+          y: 223.854608,
+        },
+        r: 325.279786,
+        theta0: (-0.523856),
+        theta1: (-0.000000),
+        clockwise: true,
+      }),
+    ],
+  ]
+  ->Belt.List.map(shapes =>
+      constrain(shapes, {
+                          tl: {
+                            x: 0.,
+                            y: 0.,
+                          },
+                          br: {
+                            x: 200.,
+                            y: 200.,
+                          },
+                        })
+    );
 
 // let fiveCircles = {
 //   let r = 60.;
@@ -554,17 +703,35 @@ let make = (~which) => {
       };
     loop(count);
   };
+  let which =
+    switch (Js.String.split("/", which)) {
+    | [|_, one|] => Some(int_of_string(one))
+    | _ => None
+    };
 
   let tests =
-    switch (Js.String.split("/", which)) {
-    | [|_, one|] =>
-      rotations(tests[int_of_string(one)], 12)->Belt.List.toArray
-    | _ => tests
+    switch (which) {
+    | Some(one) =>
+      rotations(tests[one], 12)
+      ->Belt.List.toArray
+      ->Belt.Array.map(shape =>
+          shape->constrain({
+            tl: {
+              x: 0.,
+              y: 0.,
+            },
+            br: {
+              x: 400.,
+              y: 400.,
+            },
+          })
+        )
+    | None => tests
     };
 
   let wrap = 4;
-  let w = 200.;
-  let h = 200.;
+  let w = which == None ? 200. : 400.;
+  let h = which == None ? 200. : 400.;
 
   <div>
     <svg

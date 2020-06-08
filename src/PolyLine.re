@@ -1,9 +1,6 @@
 open Types;
 open Calculate;
 
-let almostEqual = (p1, p2) =>
-  abs_float(p1.x -. p2.x) < 0.001 && abs_float(p1.y -. p2.y) < 0.001;
-
 let findMap = (arr, fn) => {
   let rec loop = i =>
     if (i >= Array.length(arr)) {
@@ -133,91 +130,37 @@ let xor = (a, b) => a ? b ? false : true : b;
  */
 let collideEndToEnd = (prev, next, clockwise) => {
   switch (prev, next) {
-  | (CLine(l1), CLine(l2)) => intersection(l1.p1, l1.p2, l2.p1, l2.p2)
+  | (CLine(l1), CLine(l2)) =>
+    if (almostEqual(l1.p2, l2.p1)) {
+      Some(l1.p2);
+    } else {
+      intersection(l1.p1, l1.p2, l2.p1, l2.p2);
+    }
   | (CCirclePart(c1), CCirclePart(c2)) =>
-    switch (intersectCircles(c1.center, c1.r, c2.center, c2.r)) {
-    | [p0, p1] =>
-      let angleDiff = c1.theta1 -. c2.theta0;
-      // if (c1.clockwise != c2.clockwise) {
-      //   // it's a sharp angle
-      // } else {
-      //   // it's a "softer" angle
-      // }
-      // Some(clockwise && c1.clockwise && c2.clockwise ? p1 : p0);
-      // // START HERE!!! If we return p1 then the last one is correct and all others are wrong..
-      // Js.log((
-      //   c1.clockwise,
-      //   c2.clockwise,
-      //   normalizeTheta(angleDiff),
-      //   clockwise,
-      // ));
-      // Some(angleDiff > pi || angleDiff < -. pi ? p1 : p0);
-      // Some(p0);
-      // Ughhhhh I have no idea why this would work....
-      Some(
-        // clockwise
-        // && c1.clockwise
-        // && c2.clockwise
-        normalizeTheta(angleDiff) > 0. ? p1 : p0,
-      );
-    // switch (c1.clockwise, c2.clockwise, clockwise, angleDiff > 0.) {
-    // // | (true, true, true, true) => Some(p1)
-    // // | (false, false, _, _) => Some(p1)
-    // | _ => Some(p0)
-    // };
-    // if (abs_float(angleDiff) < 0.01) {
-    //   // the circles are tangent.
-    //   ()
-    // } else if (angleDiff < 0.) {
-    //   // the circle we're going to is "a corner to the left"
-    //   ()
-    // } else {
-    //   // the circle we're going to is "a corner to the right"
-    //   ()
-    // };
-    // None
-    // Cases:
-    // _/
-    // -\
-    // |/
-    // |\
-    // Some(xor(clockwise, c1.clockwise) ? p0 : p1)
-    | _ => None
+    if (almostEqual(c1.center, c2.center) && almostEqualf(c1.r, c2.r)) {
+      Some(Calculate.push(c1.center, ~theta=c1.theta1, ~mag=c1.r));
+    } else {
+      switch (intersectCircles(c1.center, c1.r, c2.center, c2.r)) {
+      | [p0, p1] =>
+        let angleDiff = c1.theta1 -. c2.theta0;
+        Some(normalizeTheta(angleDiff) > 0. ? p1 : p0);
+      | _ => None
+      };
     }
   | (CLine(l1), CCirclePart({center, r} as c1)) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
-    | [] =>
-      // Js.log("No collide!!!");
-      None
+    | [] => None
     | [p] => Some(p)
-    | [p1, _, p2] =>
-      // let t1 = angleTo(dpos(center, p1));
-      // let t2 = angleTo(dpos(center, p2));
-      // if (angleDiff(theta0, t1) < angleDiff(theta0, t2)) {
-      //   Some(p1);
-      // } else {
-      //   Some(p2);
-      // };
-      Some(xor(clockwise, c1.clockwise) ? p2 : p1)
-    | _ =>
-      // Js.log2("No collide more!!!", Array.of_list(points));
-      None
+    | [p1, _, p2] => Some(xor(clockwise, c1.clockwise) ? p2 : p1)
+    | _ => None
     };
   | (CCirclePart({center, r} as c1), CLine(l1)) =>
     let points = lineCircle(center, r, l1.p1, l1.p2);
     switch (points) {
     | [] => None
     | [p] => Some(p)
-    | [p1, _, p2] =>
-      // let t1 = angleTo(dpos(center, p1));
-      // let t2 = angleTo(dpos(center, p2));
-      // if (angleDiff(theta1, t1) < angleDiff(theta1, t2)) {
-      //   Some(p1);
-      // } else {
-      //   Some(p2);
-      // };
-      Some(xor(clockwise, c1.clockwise) ? p1 : p2)
+    | [p1, _, p2] => Some(xor(clockwise, c1.clockwise) ? p1 : p2)
     | _ => None
     };
   | _ => None

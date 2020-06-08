@@ -6,6 +6,11 @@ let tau = pi *. 2.;
 
 let angleTo = ({x, y}) => atan2(y, x);
 
+let almostEqualf = (a, b) => abs_float(a -. b) < 0.001;
+
+let almostEqual = (p1, p2) =>
+  almostEqualf(p1.x, p2.x) && almostEqualf(p1.y, p2.y);
+
 let dist = ({x, y}) => {
   sqrt(x *. x +. y *. y);
 };

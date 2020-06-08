@@ -32,6 +32,8 @@ let potentials = (scene: scene, selection: selection, positions) =>
     | {points: [p2, p1]} =>
       let {pos: _, sym} = S.getExn(scene.points, p1.id);
       let {pos: _, sym: sym2} = S.getExn(scene.points, p2.id);
+      let p2at = resolvePoint(p2, scene, positions);
+      let p1at = resolvePoint(p1, scene, positions);
       let sym = bestSym(sym, sym2);
       [
         `Shape({kind: Line({p1, p2}), sym, color: None}),
