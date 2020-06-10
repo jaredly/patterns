@@ -6,6 +6,14 @@ module Colors = {
   let creating = "magenta";
 };
 
+module Perlin = {
+  [@bs.val] [@bs.module "./Perlin.js"]
+  external makeImage: (int, int, string) => string = "makeImage";
+  // let useColorTile = color => {
+  //   let imageHash =
+  // }
+};
+
 let tx = (x, transform) => (x -. transform.center.x) *. transform.zoom;
 let ty = (y, transform) => (y -. transform.center.y) *. transform.zoom;
 let tf = (f, transform) => f *. transform.zoom;
@@ -400,6 +408,13 @@ let make =
       ),
   };
 
+  let allColors =
+    tiles
+    ->Belt.Array.reduce(Belt.Set.String.empty, (colors, (_, _, tile)) => {
+        colors->Belt.Set.String.add(tile.color)
+      })
+    ->Belt.Set.String.toArray;
+
   <svg
     xmlns="http://www.w3.org/2000/svg"
     ref={ReactDOMRe.Ref.domRef(innerRef)}
@@ -409,156 +424,180 @@ let make =
       setSelection(Types.emptySelection);
     }}
     height={string_of_int(height) ++ "px"}>
+    <defs>
+      {allColors
+       ->Belt.Array.mapWithIndex((i, color) =>
+           <pattern
+             key={string_of_int(i)}
+             id={"swatch-" ++ string_of_int(i)}
+             patternUnits="userSpaceOnUse"
+             width="500"
+             height="500">
+             <image
+               href={Perlin.makeImage(500, 500, color)}
+               x="0"
+               y="0"
+               width="500"
+               height="500"
+             />
+           </pattern>
+         )
+       ->React.array}
+    </defs>
     // {tiles->Js.Array2.sortInPlaceWith}
-
-      {tiles
-       ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
-           cmp(a.order, b.order)
-         )
-       ->Belt.Array.map(((k, sides, {color, margin})) => {
-           <path
-             key={toId(k)}
-             fill=color
-             d={polyPath(transform, sides, margin, false)}
-             onClick={evt => {
-               evt->ReactEvent.Mouse.stopPropagation;
-               selectTile(k);
-               Js.log("OK SELECTED TILE");
-               Js.log(
-                 "["
-                 ++ (
-                   sides->Belt.List.map(showConcreteShape)
-                   |> String.concat(",\n  ")
-                 )
-                 ++ "]",
-               );
-             }}
-             stroke={isTileSelected(selection, k) ? "black" : "green"}
-             strokeWidth={isTileSelectedOrHovered(selection, k) ? "3" : "0"}
-             className=Css.(
-               style([
-                 cursor(`pointer),
-                 //  hover([
-                 //  ])
-               ])
-             )
-           />
-         })
-       ->React.array}
-      {potentialTiles
-       ->Belt.List.toArray
-       ->Belt.Array.mapWithIndex(
-           (i, (fullSides, {sym, color, margin, sides})) => {
-           <path
-             key={string_of_int(i)}
-             fill=color
-             d={polyPath(transform, fullSides, margin, false)}
-             //  onClick={_ => selectTile(k)}
-             onClick={evt => {
-               evt->ReactEvent.Mouse.stopPropagation;
-               let (scene, k) = scene->Api.Tile.add(~sym, sides);
-               setScene(scene);
-               setSelection({
-                 tiles: [{id: k, index: 0}],
-                 shapes: [],
-                 points: [],
-               });
-             }}
-             stroke="black"
-             strokeWidth="3"
-             className=Css.(style([cursor(`pointer)]))
-           />
-         })
-       ->React.array}
-      {(
-         scene.presentation.traces
-           ? shapes : shapes->Belt.Array.keep(((_, _, c)) => c != None)
+    {tiles
+     ->Js.Array2.sortInPlaceWith(((_, _, a), (_, _, b)) =>
+         cmp(a.order, b.order)
        )
-       ->Belt.Array.map(((k, shape, color)) =>
-           <Shape
-             color
-             isHovered={
-               (
-                 switch (hover) {
-                 | Some(`Shape({id})) when id == k.id => true
-                 | _ => false
-                 }
-               )
-               || isShapeHovered(selection, k)
+     ->Belt.Array.map(((k, sides, {color, margin})) => {
+         <path
+           key={toId(k)}
+           fill={
+             switch (allColors->Belt.Array.getIndexBy(el => el == color)) {
+             | None => color
+             | Some(i) => "url(#swatch-" ++ string_of_int(i) ++ ")"
              }
-             transform
-             isSelected={isShapeSelected(selection, k)}
-             onSelect={() => selectShape(k)}
-             key={toId(k)}
-             shape
-           />
-         )
-       ->React.array}
-      {potentialShapes
-       ->Belt.List.toArray
-       ->Belt.Array.mapWithIndex((i, (shape, concreteShape)) => {
-           <Shape
-             color=None
-             isHovered=true
-             transform
-             isSelected=true
-             onSelect={() => {
-               let (scene, k) = scene->Api.Shape.addFull(shape);
-               setScene(scene);
-               setSelection({
-                 shapes: [{id: k, index: 0}],
-                 tiles: [],
-                 points: [],
-               });
-             }}
-             key={string_of_int(i)}
-             shape=concreteShape
-           />
-         })
-       ->React.array}
-      {potentialPoints
-       ->Belt.List.toArray
-       ->Belt.Array.mapWithIndex((i, (point, pos)) =>
-           <Point
-             key={string_of_int(i)}
-             onClick={evt => {
-               evt->ReactEvent.Mouse.stopPropagation;
-               let (scene, k) =
-                 scene->Api.Point.add(~sym=point.sym, point.pos);
-               setScene(scene);
-               setSelection({
-                 points: [{id: k, index: 0}],
-                 shapes: [],
-                 tiles: [],
-               });
-               // TODO
-               ();
-             }}
-             size=4
-             transform
-             pos
-             isSelected=true
-             isHovered=true
-           />
-         )
-       ->React.array}
-      {scene.presentation.points
-         ? points
-           ->Belt.Array.map(((k, pos)) => {
-               <Point
-                 key={toId(k)}
-                 size=2
-                 onClick={evt => {
-                   evt->ReactEvent.Mouse.stopPropagation;
-                   selectPoint(k);
-                 }}
-                 transform
-                 pos
-                 isSelected={isSelected(selection, k)}
-                 isHovered={hover == Some(`Point(k))}
-               />
-             })
-           ->React.array
-         : React.null}
-    </svg>;
+           }
+           d={polyPath(transform, sides, margin, false)}
+           onClick={evt => {
+             evt->ReactEvent.Mouse.stopPropagation;
+             selectTile(k);
+             Js.log("OK SELECTED TILE");
+             Js.log(
+               "["
+               ++ (
+                 sides->Belt.List.map(showConcreteShape)
+                 |> String.concat(",\n  ")
+               )
+               ++ "]",
+             );
+           }}
+           stroke={isTileSelected(selection, k) ? "black" : "green"}
+           strokeWidth={isTileSelectedOrHovered(selection, k) ? "3" : "0"}
+           className=Css.(
+             style([
+               cursor(`pointer),
+               //  hover([
+               //  ])
+             ])
+           )
+         />
+       })
+     ->React.array}
+    {potentialTiles
+     ->Belt.List.toArray
+     ->Belt.Array.mapWithIndex(
+         (i, (fullSides, {sym, color, margin, sides})) => {
+         <path
+           key={string_of_int(i)}
+           fill=color
+           d={polyPath(transform, fullSides, margin, false)}
+           //  onClick={_ => selectTile(k)}
+           onClick={evt => {
+             evt->ReactEvent.Mouse.stopPropagation;
+             let (scene, k) = scene->Api.Tile.add(~sym, sides);
+             setScene(scene);
+             setSelection({
+               tiles: [{id: k, index: 0}],
+               shapes: [],
+               points: [],
+             });
+           }}
+           stroke="black"
+           strokeWidth="3"
+           className=Css.(style([cursor(`pointer)]))
+         />
+       })
+     ->React.array}
+    {(
+       scene.presentation.traces
+         ? shapes : shapes->Belt.Array.keep(((_, _, c)) => c != None)
+     )
+     ->Belt.Array.map(((k, shape, color)) =>
+         <Shape
+           color
+           isHovered={
+             (
+               switch (hover) {
+               | Some(`Shape({id})) when id == k.id => true
+               | _ => false
+               }
+             )
+             || isShapeHovered(selection, k)
+           }
+           transform
+           isSelected={isShapeSelected(selection, k)}
+           onSelect={() => selectShape(k)}
+           key={toId(k)}
+           shape
+         />
+       )
+     ->React.array}
+    {potentialShapes
+     ->Belt.List.toArray
+     ->Belt.Array.mapWithIndex((i, (shape, concreteShape)) => {
+         <Shape
+           color=None
+           isHovered=true
+           transform
+           isSelected=true
+           onSelect={() => {
+             let (scene, k) = scene->Api.Shape.addFull(shape);
+             setScene(scene);
+             setSelection({
+               shapes: [{id: k, index: 0}],
+               tiles: [],
+               points: [],
+             });
+           }}
+           key={string_of_int(i)}
+           shape=concreteShape
+         />
+       })
+     ->React.array}
+    {potentialPoints
+     ->Belt.List.toArray
+     ->Belt.Array.mapWithIndex((i, (point, pos)) =>
+         <Point
+           key={string_of_int(i)}
+           onClick={evt => {
+             evt->ReactEvent.Mouse.stopPropagation;
+             let (scene, k) =
+               scene->Api.Point.add(~sym=point.sym, point.pos);
+             setScene(scene);
+             setSelection({
+               points: [{id: k, index: 0}],
+               shapes: [],
+               tiles: [],
+             });
+             // TODO
+             ();
+           }}
+           size=4
+           transform
+           pos
+           isSelected=true
+           isHovered=true
+         />
+       )
+     ->React.array}
+    {scene.presentation.points
+       ? points
+         ->Belt.Array.map(((k, pos)) => {
+             <Point
+               key={toId(k)}
+               size=2
+               onClick={evt => {
+                 evt->ReactEvent.Mouse.stopPropagation;
+                 selectPoint(k);
+               }}
+               transform
+               pos
+               isSelected={isSelected(selection, k)}
+               isHovered={hover == Some(`Point(k))}
+             />
+           })
+         ->React.array
+       : React.null}
+  </svg>;
 };

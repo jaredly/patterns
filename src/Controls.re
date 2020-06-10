@@ -363,6 +363,7 @@ let make =
       ~setSelection: selection => unit,
       ~scene,
       ~setScene,
+      ~clearScene,
       ~onUndo,
       ~togglePoints,
       ~toggleTraces,
@@ -373,20 +374,7 @@ let make =
     (
       "Clear scene",
       () => {
-        Location.setHash("");
-        setScene(
-          {
-            let scene = Api.init();
-            let (scene, center) = scene->Api.Point.abs(0., 0.);
-            let (scene, _) =
-              scene->Api.Point.abs(
-                ~sym=Some({center: Api.Ref.id(center), count: 12}),
-                0.,
-                -200.,
-              );
-            scene;
-          },
-        );
+        clearScene();
       },
     ),
     ("Toggle points", () => togglePoints()),
@@ -420,6 +408,21 @@ let make =
              ),
            ]
          | {shapes: [], points: [], tiles: [r]} => [
+             (
+               "Duplicate tile",
+               (
+                 () => {
+                   let tile = scene.tiles->Belt.Map.String.getExn(r.id);
+                   let (scene, id) =
+                     scene->Api.Tile.add(~sym=tile.sym, tile.sides);
+                   setSelection({
+                     ...Types.emptySelection,
+                     tiles: [{id, index: 0}],
+                   });
+                   setScene(scene);
+                 }
+               ),
+             ),
              (
                "Remove tile",
                (

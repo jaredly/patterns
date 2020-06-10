@@ -112,6 +112,24 @@ let reduce = (state, action) => {
       },
     }
   | `SetSelection(selection) => {...state, selection}
+  | `ClearScene =>
+    Controls.Location.setHash("");
+    {
+      ...state,
+      id: None,
+      scene: {
+        let scene = Api.init();
+        let (scene, center) = scene->Api.Point.abs(0., 0.);
+        let (scene, _) =
+          scene->Api.Point.abs(
+            ~sym=Some({center: Api.Ref.id(center), count: 12}),
+            0.,
+            -200.,
+          );
+        scene;
+      },
+    };
+  | `SetId(id) => {...state, id: Some(id)}
   | `SetScene(scene) => {
       ...state,
       scene,
@@ -150,6 +168,7 @@ let make = (~initial) => {
         selection={state.selection}
         setSelection={s => dispatch(`SetSelection(s))}
         scene={state.scene}
+        clearScene={() => dispatch(`ClearScene)}
         setScene={s => dispatch(`SetScene(s))}
         togglePoints={() => dispatch(`TogglePoints)}
         toggleTraces={() => dispatch(`ToggleTraces)}
@@ -177,6 +196,7 @@ let make = (~initial) => {
             | None =>
               let id = Api.genId();
               Controls.Location.setHash(id);
+              dispatch(`SetId(id));
               id;
             | Some(id) => id
             };

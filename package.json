@@ -2,6 +2,8 @@
     "dependencies": {
         "bs-css-emotion": "^1.2.0",
         "bs-platform": "^7.3.2",
+        "d3-color": "^1.4.1",
+        "d3-interpolate": "^1.4.0",
         "localforage": "^1.7.3",
         "parcel": "^1.12.4",
         "react": "^16.13.1",

@@ -63,8 +63,13 @@ let potentials = (scene: scene, selection: selection, positions) =>
           sym,
           kind: CirclePart({center: p2, onEdge: p1, goUntil: p3}),
         }),
+        `Shape({
+          color: None,
+          sym,
+          kind: CirclePart({center: p2, onEdge: p3, goUntil: p1}),
+        }),
       ];
-    | {tiles: [], shapes, points: []} =>
+    | {shapes} =>
       let found =
         shapes->Belt.List.map(r =>
           (
